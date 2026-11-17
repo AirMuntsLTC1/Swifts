@@ -1,9 +1,10 @@
 package com.swifts.app.domain
 
+import android.app.Activity
+
 interface AuthRepository {
-    suspend fun signIn(email: String, password: String): Result<Session>
-    /** Returns null when the project requires email confirmation before sign-in. */
-    suspend fun signUp(email: String, password: String, username: String, displayName: String): Result<Session?>
+    /** Shows the native Google account chooser and signs the user in. */
+    suspend fun signInWithGoogle(activity: Activity): Result<Session>
     fun signOut(): Result<Unit>
     fun currentUserId(): String?
 }

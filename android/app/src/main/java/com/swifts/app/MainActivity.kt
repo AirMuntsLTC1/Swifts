@@ -3,12 +3,12 @@ package com.swifts.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -20,6 +20,7 @@ import com.swifts.app.ui.AuthScreen
 import com.swifts.app.ui.AuthViewModel
 import com.swifts.app.ui.FeedScreen
 import com.swifts.app.ui.FeedViewModel
+import com.swifts.app.ui.theme.SwiftsTheme
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
@@ -33,8 +34,8 @@ class MainActivity : ComponentActivity() {
         val lang = Locale.getDefault().language
 
         setContent {
-            MaterialTheme {
-                Surface {
+            SwiftsTheme {
+                Surface(color = MaterialTheme.colorScheme.background) {
                     var signedIn by remember { mutableStateOf(auth.currentUserId() != null) }
                     if (!signedIn) {
                         val vm: AuthViewModel = viewModel(

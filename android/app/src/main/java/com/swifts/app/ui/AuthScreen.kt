@@ -1,5 +1,8 @@
 package com.swifts.app.ui
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -7,107 +10,77 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.swifts.app.R
+import com.swifts.app.ui.theme.LocalSwiftsColors
 
 @Composable
 fun AuthScreen(vm: AuthViewModel, onSignedIn: () -> Unit) {
     val state by vm.state.collectAsState()
-    var signUpMode by rememberSaveable { mutableStateOf(false) }
-    var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var username by rememberSaveable { mutableStateOf("") }
-    var displayName by rememberSaveable { mutableStateOf("") }
+    val context = LocalContext.current
+    val colors = LocalSwiftsColors.current
 
     LaunchedEffect(state.signedIn) { if (state.signedIn) onSignedIn() }
 
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineLarge)
-        Spacer(Modifier.height(24.dp))
-
-        if (signUpMode) {
-            OutlinedTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = { Text(stringResource(R.string.username)) },
-                isError = state.usernameInvalid,
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (state.usernameInvalid) {
-                Text(stringResource(R.string.invalid_username), color = MaterialTheme.colorScheme.error)
-            }
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = displayName,
-                onValueChange = { displayName = it },
-                label = { Text(stringResource(R.string.display_name)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(8.dp))
-        }
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text(stringResource(R.string.email)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth(),
+        Text(
+            stringResource(R.string.app_name),
+            style = MaterialTheme.typography.headlineSmall,
+            color = colors.primaryText,
         )
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text(stringResource(R.string.password)) },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
+        Text(
+            stringResource(R.string.auth_subtitle),
+            style = MaterialTheme.typography.bodyLarge,
+            color = colors.mutedText,
+            textAlign = TextAlign.Center,
         )
+        Spacer(Modifier.height(32.dp))
+
+        Button(
+            onClick = { vm.signInWithGoogle(context.findActivity()) },
+            enabled = !state.loading,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(12.dp),
+        ) {
+            if (state.loading) {
+                CircularProgressIndicator(Modifier.height(20.dp), strokeWidth = 2.dp)
+            } else {
+                Text(stringResource(R.string.continue_with_google), style = MaterialTheme.typography.labelLarge)
+            }
+        }
 
         state.error?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
-        }
-        if (state.needsConfirm) {
-            Text(stringResource(R.string.confirm_email), modifier = Modifier.padding(top = 8.dp))
-        }
-
-        Spacer(Modifier.height(16.dp))
-        Button(
-            onClick = {
-                if (signUpMode) vm.signUp(email, password, username, displayName)
-                else vm.signIn(email, password)
-            },
-            enabled = !state.loading,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(if (signUpMode) R.string.sign_up else R.string.sign_in))
-        }
-        TextButton(onClick = { signUpMode = !signUpMode }) {
-            Text(stringResource(if (signUpMode) R.string.switch_to_sign_in else R.string.switch_to_sign_up))
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 12.dp),
+            )
         }
     }
+}
+
+private tailrec fun Context.findActivity(): Activity = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> error("Google sign-in needs an Activity context")
 }

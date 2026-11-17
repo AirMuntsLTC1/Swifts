@@ -25,7 +25,7 @@ class SupabasePostRepository(private val api: SupabaseClient) : PostRepository {
         }.toString()
         val text = api.request(
             "POST",
-            "/rest/v1/posts?select=id,author_id,body,lang,created_at",
+            "/rest/v1/posts?select=id,author_id,body,lang,visibility,created_at",
             payload,
             prefer = "return=representation",
         )

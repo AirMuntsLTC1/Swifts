@@ -1,7 +1,11 @@
-// Supabase Edge Function: GET /feed?lang=xx&cursor=ISO
+// Supabase Edge Function: GET /feed?lang=xx&cursor=ISO&limit=N
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SUPPORTED = new Set(["en", "fil", "es", "ar", "hi", "zh", "fr", "pt"]);
+const SELECT =
+  "id, author_id, body, lang, visibility, created_at, " +
+  "author:profiles!posts_author_id_fkey(username, display_name, avatar_url), " +
+  "post_media(kind, storage_path, thumb_path)";
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const url = new URL(req.url);
@@ -9,9 +13,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const cursor = url.searchParams.get("cursor");
   const limit = Math.min(Number(url.searchParams.get("limit") ?? 20), 50);
 
-  if (!SUPPORTED.has(lang)) {
-    return json({ error: "unsupported_lang" }, 400);
-  }
+  if (!SUPPORTED.has(lang)) return json({ error: "unsupported_lang" }, 400);
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -21,7 +23,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   let query = supabase
     .from("posts")
-    .select("id, author_id, body, lang, created_at, post_media(kind, storage_path, thumb_path)")
+    .select(SELECT)
     .eq("lang", lang)
     .order("created_at", { ascending: false })
     .limit(limit);
