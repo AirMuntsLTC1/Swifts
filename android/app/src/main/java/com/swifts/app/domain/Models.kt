@@ -25,3 +25,26 @@ data class FeedPage(
     val items: List<Post>,
     val next_cursor: String? = null,
 )
+
+@Serializable
+data class Profile(
+    val id: String,
+    val username: String,
+    val display_name: String = "",
+    val avatar_url: String? = null,
+    val bio: String = "",
+    val city: String? = null,
+    val hometown: String? = null,
+    val work: String? = null,
+    val school: String? = null,
+)
+
+@Serializable
+data class ProfileUpdate(
+    val display_name: String,
+    val bio: String,
+    val city: String?,
+    val hometown: String?,
+    val work: String?,
+    val school: String?,
+)

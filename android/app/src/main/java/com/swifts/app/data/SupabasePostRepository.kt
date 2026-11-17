@@ -7,6 +7,9 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.net.URLEncoder
 
+private const val POST_SELECT =
+    "id,author_id,body,lang,visibility,created_at,author:profiles!posts_author_id_fkey(username,display_name,avatar_url)"
+
 class SupabasePostRepository(private val api: SupabaseClient) : PostRepository {
 
     override suspend fun feed(lang: String, cursor: String?, limit: Int): Result<FeedPage> = runCatching {
@@ -15,6 +18,24 @@ class SupabasePostRepository(private val api: SupabaseClient) : PostRepository {
             if (cursor != null) append("&cursor=").append(enc(cursor))
         }
         api.json.decodeFromString(FeedPage.serializer(), api.request("GET", "/functions/v1/feed$query"))
+    }
+
+    override suspend fun followingFeed(authorIds: List<String>, limit: Int): Result<FeedPage> = runCatching {
+        if (authorIds.isEmpty()) return@runCatching FeedPage(items = emptyList())
+        val ids = authorIds.joinToString(",") { enc(it) }
+        val text = api.request(
+            "GET",
+            "/rest/v1/posts?select=$POST_SELECT&author_id=in.($ids)&order=created_at.desc&limit=$limit",
+        )
+        FeedPage(items = api.json.decodeFromString<List<Post>>(text))
+    }
+
+    override suspend fun postsBy(authorId: String, limit: Int): Result<List<Post>> = runCatching {
+        val text = api.request(
+            "GET",
+            "/rest/v1/posts?select=$POST_SELECT&author_id=eq.${enc(authorId)}&order=created_at.desc&limit=$limit",
+        )
+        api.json.decodeFromString<List<Post>>(text)
     }
 
     override suspend fun createPost(authorId: String, body: String, lang: String): Result<Post> = runCatching {
@@ -37,7 +58,7 @@ class SupabasePostRepository(private val api: SupabaseClient) : PostRepository {
             val payload = buildJsonObject { put("user_id", userId); put("post_id", postId) }.toString()
             api.request("POST", "/rest/v1/likes", payload, prefer = "resolution=ignore-duplicates,return=minimal")
         } else {
-            api.request("DELETE", "/rest/v1/likes?user_id=eq.$userId&post_id=eq.$postId")
+            api.request("DELETE", "/rest/v1/likes?user_id=eq.${enc(userId)}&post_id=eq.${enc(postId)}")
         }
         Unit
     }

@@ -19,10 +19,11 @@ import com.swifts.app.data.SessionStore
 import com.swifts.app.data.SupabaseAuthRepository
 import com.swifts.app.data.SupabaseClient
 import com.swifts.app.data.SupabasePostRepository
+import com.swifts.app.data.SupabaseProfileRepository
+import com.swifts.app.ui.AppServices
 import com.swifts.app.ui.AuthScreen
 import com.swifts.app.ui.AuthViewModel
-import com.swifts.app.ui.FeedScreen
-import com.swifts.app.ui.FeedViewModel
+import com.swifts.app.ui.SwiftsShell
 import com.swifts.app.ui.theme.SwiftsTheme
 import java.util.Locale
 
@@ -30,7 +31,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Coil needs the SVG decoder to draw assets/icons/*.svg
         Coil.setImageLoader(
             ImageLoader.Builder(this).components { add(SvgDecoder.Factory()) }.build()
         )
@@ -38,8 +38,12 @@ class MainActivity : ComponentActivity() {
         val store = SessionStore(applicationContext)
         val api = SupabaseClient(store)
         val auth = SupabaseAuthRepository(api, store)
-        val posts = SupabasePostRepository(api)
-        val lang = Locale.getDefault().language
+        val services = AppServices(
+            auth = auth,
+            posts = SupabasePostRepository(api),
+            profiles = SupabaseProfileRepository(api),
+            lang = Locale.getDefault().language,
+        )
 
         setContent {
             SwiftsTheme {
@@ -51,13 +55,10 @@ class MainActivity : ComponentActivity() {
                         )
                         AuthScreen(vm) { signedIn = true }
                     } else {
-                        val vm: FeedViewModel = viewModel(
-                            factory = viewModelFactory { initializer { FeedViewModel(posts, auth, lang) } },
-                        )
-                        FeedScreen(vm) {
+                        SwiftsShell(services = services, onSignOut = {
                             auth.signOut()
                             signedIn = false
-                        }
+                        })
                     }
                 }
             }
