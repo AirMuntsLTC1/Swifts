@@ -38,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -87,7 +86,7 @@ fun FeedScreen(vm: FeedViewModel, onSignOut: () -> Unit) {
                 containerColor = colors.accent,
                 contentColor = androidx.compose.ui.graphics.Color.White,
             ) {
-                Icon(painterResource(R.drawable.ic_plus), contentDescription = stringResource(R.string.new_post))
+                AssetIcon(name = "ic_plus", tint = androidx.compose.ui.graphics.Color.White, contentDescription = stringResource(R.string.new_post))
             }
         },
     ) { padding ->
@@ -248,10 +247,10 @@ private fun visibilityLabel(visibility: String): String = when (visibility) {
 private fun SwiftsBottomBar(selected: Int, onSelect: (Int) -> Unit) {
     val colors = LocalSwiftsColors.current
     val items = listOf(
-        Triple(R.string.nav_home, R.drawable.ic_home, 0),
-        Triple(R.string.nav_search, R.drawable.ic_search, 1),
-        Triple(R.string.nav_groups, R.drawable.ic_group, 2),
-        Triple(R.string.nav_profile, R.drawable.ic_person, 3),
+        Triple(R.string.nav_home, "ic_home", 0),
+        Triple(R.string.nav_search, "ic_search", 1),
+        Triple(R.string.nav_groups, "ic_group", 2),
+        Triple(R.string.nav_profile, "ic_person", 3),
     )
     NavigationBar(containerColor = MaterialTheme.colorScheme.background) {
         items.forEach { (labelRes, iconRes, index) ->
@@ -260,7 +259,7 @@ private fun SwiftsBottomBar(selected: Int, onSelect: (Int) -> Unit) {
             NavigationBarItem(
                 selected = isSelected,
                 onClick = { onSelect(index) },
-                icon = { Icon(painterResource(iconRes), contentDescription = null, tint = tint) },
+                icon = { AssetIcon(name = iconRes, tint = tint, contentDescription = null) },
                 label = {
                     Text(
                         stringResource(labelRes),

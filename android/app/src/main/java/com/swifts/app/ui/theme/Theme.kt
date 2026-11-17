@@ -1,5 +1,6 @@
 package com.swifts.app.ui.theme
 
+import android.content.res.AssetManager
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -8,19 +9,21 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
-import com.swifts.app.R
 
-val Inter = FontFamily(
-    Font(R.font.inter_regular, FontWeight.Normal),
-    Font(R.font.inter_medium, FontWeight.Medium),
-    Font(R.font.inter_semibold, FontWeight.SemiBold),
-    Font(R.font.inter_bold, FontWeight.Bold),
+/** Inter loaded from assets/fonts (filled by tools/install_fonts.sh). */
+fun interFamily(assets: AssetManager): FontFamily = FontFamily(
+    Font(path = "fonts/inter_regular.ttf", assetManager = assets, weight = FontWeight.Normal),
+    Font(path = "fonts/inter_medium.ttf", assetManager = assets, weight = FontWeight.Medium),
+    Font(path = "fonts/inter_semibold.ttf", assetManager = assets, weight = FontWeight.SemiBold),
+    Font(path = "fonts/inter_bold.ttf", assetManager = assets, weight = FontWeight.Bold),
 )
 
 @Immutable
@@ -50,64 +53,68 @@ private val DarkColors = SwiftsColors(
 
 val LocalSwiftsColors = staticCompositionLocalOf { LightColors }
 
-private val base = Typography()
-
-// Type scale: Inter, sizes and weights from the Swifts design spec.
-val SwiftsTypography = Typography(
-    displayLarge = base.displayLarge.copy(fontFamily = Inter),
-    displayMedium = base.displayMedium.copy(fontFamily = Inter),
-    displaySmall = base.displaySmall.copy(fontFamily = Inter),
-    // Page / tab headers: 22-24sp, Bold, -0.4 letter spacing
-    headlineLarge = base.headlineLarge.copy(fontFamily = Inter),
-    headlineMedium = base.headlineMedium.copy(fontFamily = Inter),
-    headlineSmall = base.headlineSmall.copy(
-        fontFamily = Inter, fontWeight = FontWeight.Bold,
-        fontSize = 24.sp, lineHeight = 30.sp, letterSpacing = (-0.4).sp,
-    ),
-    titleLarge = base.titleLarge.copy(fontFamily = Inter),
-    // Section labels: 16-17sp, Bold
-    titleMedium = base.titleMedium.copy(
-        fontFamily = Inter, fontWeight = FontWeight.Bold,
-        fontSize = 16.sp, lineHeight = 22.sp,
-    ),
-    // Usernames and post authors: 15sp, SemiBold
-    titleSmall = base.titleSmall.copy(
-        fontFamily = Inter, fontWeight = FontWeight.SemiBold,
-        fontSize = 15.sp, lineHeight = 20.sp,
-    ),
-    // Post body text: 15sp, Regular
-    bodyLarge = base.bodyLarge.copy(
-        fontFamily = Inter, fontWeight = FontWeight.Normal,
-        fontSize = 15.sp, lineHeight = 22.sp,
-    ),
-    bodyMedium = base.bodyMedium.copy(fontFamily = Inter),
-    // Timestamps and subtitles: 12-13sp, Regular
-    bodySmall = base.bodySmall.copy(
-        fontFamily = Inter, fontWeight = FontWeight.Normal,
-        fontSize = 12.sp, lineHeight = 16.sp,
-    ),
-    // Filter pills and tab labels: 14sp, SemiBold
-    labelLarge = base.labelLarge.copy(
-        fontFamily = Inter, fontWeight = FontWeight.SemiBold,
-        fontSize = 14.sp, lineHeight = 18.sp,
-    ),
-    // Action buttons (Like, Comment, Share): 13-14sp, SemiBold
-    labelMedium = base.labelMedium.copy(
-        fontFamily = Inter, fontWeight = FontWeight.SemiBold,
-        fontSize = 13.sp, lineHeight = 16.sp,
-    ),
-    // Bottom navigation labels: 10-11sp, Medium
-    labelSmall = base.labelSmall.copy(
-        fontFamily = Inter, fontWeight = FontWeight.Medium,
-        fontSize = 11.sp, lineHeight = 13.sp, letterSpacing = 0.sp,
-    ),
-)
+/** Type scale from the Swifts spec, all in Inter. */
+fun swiftsTypography(f: FontFamily): Typography {
+    val base = Typography()
+    return Typography(
+        displayLarge = base.displayLarge.copy(fontFamily = f),
+        displayMedium = base.displayMedium.copy(fontFamily = f),
+        displaySmall = base.displaySmall.copy(fontFamily = f),
+        // Page / tab headers: 22-24sp, Bold, -0.4 letter spacing
+        headlineLarge = base.headlineLarge.copy(fontFamily = f),
+        headlineMedium = base.headlineMedium.copy(fontFamily = f),
+        headlineSmall = base.headlineSmall.copy(
+            fontFamily = f, fontWeight = FontWeight.Bold,
+            fontSize = 24.sp, lineHeight = 30.sp, letterSpacing = (-0.4).sp,
+        ),
+        titleLarge = base.titleLarge.copy(fontFamily = f),
+        // Section labels: 16-17sp, Bold
+        titleMedium = base.titleMedium.copy(
+            fontFamily = f, fontWeight = FontWeight.Bold,
+            fontSize = 16.sp, lineHeight = 22.sp,
+        ),
+        // Usernames and post authors: 15sp, SemiBold
+        titleSmall = base.titleSmall.copy(
+            fontFamily = f, fontWeight = FontWeight.SemiBold,
+            fontSize = 15.sp, lineHeight = 20.sp,
+        ),
+        // Post body text: 15sp, Regular
+        bodyLarge = base.bodyLarge.copy(
+            fontFamily = f, fontWeight = FontWeight.Normal,
+            fontSize = 15.sp, lineHeight = 22.sp,
+        ),
+        bodyMedium = base.bodyMedium.copy(fontFamily = f),
+        // Timestamps and subtitles: 12-13sp, Regular
+        bodySmall = base.bodySmall.copy(
+            fontFamily = f, fontWeight = FontWeight.Normal,
+            fontSize = 12.sp, lineHeight = 16.sp,
+        ),
+        // Filter pills and tab labels: 14sp, SemiBold
+        labelLarge = base.labelLarge.copy(
+            fontFamily = f, fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp, lineHeight = 18.sp,
+        ),
+        // Action buttons: 13-14sp, SemiBold
+        labelMedium = base.labelMedium.copy(
+            fontFamily = f, fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp, lineHeight = 16.sp,
+        ),
+        // Bottom navigation labels: 10-11sp, Medium
+        labelSmall = base.labelSmall.copy(
+            fontFamily = f, fontWeight = FontWeight.Medium,
+            fontSize = 11.sp, lineHeight = 13.sp, letterSpacing = 0.sp,
+        ),
+    )
+}
 
 @Composable
 fun SwiftsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
+    val context = LocalContext.current
+    val family = remember(context) { interFamily(context.assets) }
+    val typography = remember(family) { swiftsTypography(family) }
     val colors = if (darkTheme) DarkColors else LightColors
     val scheme = if (darkTheme) {
         darkColorScheme(
@@ -129,6 +136,6 @@ fun SwiftsTheme(
         )
     }
     CompositionLocalProvider(LocalSwiftsColors provides colors) {
-        MaterialTheme(colorScheme = scheme, typography = SwiftsTypography, content = content)
+        MaterialTheme(colorScheme = scheme, typography = typography, content = content)
     }
 }
