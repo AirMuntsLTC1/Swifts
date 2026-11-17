@@ -1,27 +1,79 @@
 name: ci
-on: [push, pull_request]
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  contracts:
+  quick-checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/check_contracts.py
-  php:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: find services/media-php -name '*.php' -exec php -l {} \;
-  native:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: g++ -std=c++17 -c native/src/swifts_core.cpp -Inative/include -o /tmp/core.o
+      - name: Contracts
+        run: python3 tools/check_contracts.py
+      - name: PHP lint
+        run: find services/media-php -name '*.php' -exec php -l {} \;
+      - name: C++ compile
+        run: g++ -std=c++17 -c native/src/swifts_core.cpp -Inative/include -o /tmp/core.o
+
   android:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+      GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check required secrets
+        run: |
+          for v in SUPABASE_URL SUPABASE_PUBLISHABLE_KEY; do
+            if [ -z "${!v}" ]; then echo "::error::Missing GitHub secret $v"; exit 1; fi
+          done
+          if [ -z "$GOOGLE_WEB_CLIENT_ID" ]; then
+            echo "::warning::GOOGLE_WEB_CLIENT_ID secret is empty. The app builds, but Google sign-in will fail."
+          fi
+
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: '17' }
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Gradle wrapper, dependency cache and build cache, restored from the previous run.
       - uses: gradle/actions/setup-gradle@v4
-        with: { gradle-version: '8.9' }
-      - run: cd android && gradle assembleDebug
+        with:
+          gradle-version: '8.9'
+
+      # Platform and build-tools are cached so runs skip the download.
+      - name: Cache Android SDK packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/lib/android/sdk/platforms
+            /usr/local/lib/android/sdk/build-tools
+          key: android-sdk-35-${{ runner.os }}
+
+      - name: Install SDK packages if missing
+        run: yes | sdkmanager "platforms;android-35" "build-tools;35.0.0" > /dev/null || true
+
+      - name: Build arm64 debug APK
+        working-directory: android
+        run: >
+          gradle assembleDebug
+          --build-cache --parallel --console=plain
+          -PSUPABASE_URL="$SUPABASE_URL"
+          -PSUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY"
+          -PGOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: swifts-debug-arm64
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
