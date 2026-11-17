@@ -29,7 +29,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.swifts.app.R
 import com.swifts.app.ui.theme.LocalSwiftsColors
 
-// Tabs: 0 home, 1 search, 2 groups (coming soon), 3 profile
+// Tabs: 0 home, 1 search, 2 groups, 3 profile (messages and stories come in phase 5)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
@@ -37,6 +37,7 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
     val meId = services.auth.currentUserId().orEmpty()
     var tab by rememberSaveable { mutableStateOf(0) }
     var openProfile by rememberSaveable { mutableStateOf<String?>(null) }
+    var openGroup by rememberSaveable { mutableStateOf<String?>(null) }
     var showComposer by rememberSaveable { mutableStateOf(false) }
 
     val feedVm: FeedViewModel = viewModel(
@@ -47,13 +48,16 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
     val discoverVm: DiscoverViewModel = viewModel(
         factory = viewModelFactory { initializer { DiscoverViewModel(services.profiles, services.auth) } },
     )
+    val groupsVm: GroupsViewModel = viewModel(
+        factory = viewModelFactory { initializer { GroupsViewModel(services.groups, services.auth) } },
+    )
     val feedState by feedVm.state.collectAsState()
-    val showingProfile = openProfile != null
+    val showingSubpage = openProfile != null || openGroup != null
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            if (!showingProfile) {
+            if (!showingSubpage) {
                 TopAppBar(
                     title = {
                         Text(
@@ -70,10 +74,11 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
             SwiftsBottomBar(selected = tab, onSelect = {
                 tab = it
                 openProfile = null
+                openGroup = null
             })
         },
         floatingActionButton = {
-            if (tab == 0 && !showingProfile) {
+            if (tab == 0 && !showingSubpage) {
                 FloatingActionButton(
                     onClick = { showComposer = true },
                     containerColor = colors.accent,
@@ -90,6 +95,7 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
             val pid = openProfile
+            val gid = openGroup
             when {
                 pid != null -> ProfileScreen(
                     services = services,
@@ -97,8 +103,14 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
                     onBack = { openProfile = null },
                     onSignOut = onSignOut,
                 )
+                gid != null -> GroupScreen(
+                    services = services,
+                    groupId = gid,
+                    onBack = { openGroup = null },
+                )
                 tab == 0 -> FeedScreen(feedVm, onOpenProfile = { openProfile = it })
                 tab == 1 -> DiscoverScreen(discoverVm, onOpenProfile = { openProfile = it })
+                tab == 2 -> GroupsScreen(groupsVm, onOpen = { openGroup = it })
                 tab == 3 -> ProfileScreen(
                     services = services,
                     userId = meId,
@@ -106,11 +118,7 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
                     onSignOut = onSignOut,
                 )
                 else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(R.string.coming_soon),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = colors.mutedText,
-                    )
+                    Text(stringResource(R.string.coming_soon), style = MaterialTheme.typography.bodyLarge, color = colors.mutedText)
                 }
             }
         }
@@ -153,11 +161,7 @@ private fun SwiftsBottomBar(selected: Int, onSelect: (Int) -> Unit) {
                 onClick = { onSelect(index) },
                 icon = { AssetIcon(name = icon, tint = tint, contentDescription = null) },
                 label = {
-                    Text(
-                        stringResource(labelRes),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = tint,
-                    )
+                    Text(stringResource(labelRes), style = MaterialTheme.typography.labelSmall, color = tint)
                 },
                 alwaysShowLabel = true,
                 colors = NavigationBarItemDefaults.colors(indicatorColor = colors.accentSoft),

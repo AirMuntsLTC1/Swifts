@@ -18,6 +18,7 @@ import coil.decode.SvgDecoder
 import com.swifts.app.data.SessionStore
 import com.swifts.app.data.SupabaseAuthRepository
 import com.swifts.app.data.SupabaseClient
+import com.swifts.app.data.SupabaseGroupRepository
 import com.swifts.app.data.SupabasePostRepository
 import com.swifts.app.data.SupabaseProfileRepository
 import com.swifts.app.ui.AppServices
@@ -42,6 +43,7 @@ class MainActivity : ComponentActivity() {
             auth = auth,
             posts = SupabasePostRepository(api),
             profiles = SupabaseProfileRepository(api),
+            groups = SupabaseGroupRepository(api),
             lang = Locale.getDefault().language,
         )
 

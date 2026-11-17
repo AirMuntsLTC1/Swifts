@@ -58,20 +58,31 @@ fun SectionLabel(text: String) {
     )
 }
 
+/** Rounded pill button: neutral when [active], brand accent when not. */
 @Composable
-fun FollowButton(following: Boolean, onClick: () -> Unit) {
+fun PillButton(active: Boolean, activeText: String, idleText: String, onClick: () -> Unit) {
     val colors = LocalSwiftsColors.current
     Box(
         Modifier
             .clip(RoundedCornerShape(50))
-            .background(if (following) colors.neutralPill else colors.accent)
+            .background(if (active) colors.neutralPill else colors.accent)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 7.dp),
     ) {
         Text(
-            stringResource(if (following) R.string.following else R.string.follow),
+            if (active) activeText else idleText,
             style = MaterialTheme.typography.labelLarge,
-            color = if (following) colors.primaryText else Color.White,
+            color = if (active) colors.primaryText else Color.White,
         )
     }
+}
+
+@Composable
+fun FollowButton(following: Boolean, onClick: () -> Unit) {
+    PillButton(
+        active = following,
+        activeText = stringResource(R.string.following),
+        idleText = stringResource(R.string.follow),
+        onClick = onClick,
+    )
 }

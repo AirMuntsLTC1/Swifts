@@ -1,4 +1,5 @@
 // Supabase Edge Function: GET /feed?lang=xx&cursor=ISO&limit=N
+// Home feed: public posts that are not inside a group.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SUPPORTED = new Set(["en", "fil", "es", "ar", "hi", "zh", "fr", "pt"]);
@@ -25,6 +26,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .from("posts")
     .select(SELECT)
     .eq("lang", lang)
+    .is("group_id", null)
     .order("created_at", { ascending: false })
     .limit(limit);
 

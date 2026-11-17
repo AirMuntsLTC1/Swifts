@@ -25,7 +25,7 @@ class SupabasePostRepository(private val api: SupabaseClient) : PostRepository {
         val ids = authorIds.joinToString(",") { enc(it) }
         val text = api.request(
             "GET",
-            "/rest/v1/posts?select=$POST_SELECT&author_id=in.($ids)&order=created_at.desc&limit=$limit",
+            "/rest/v1/posts?select=$POST_SELECT&author_id=in.($ids)&group_id=is.null&order=created_at.desc&limit=$limit",
         )
         FeedPage(items = api.json.decodeFromString<List<Post>>(text))
     }
@@ -33,25 +33,35 @@ class SupabasePostRepository(private val api: SupabaseClient) : PostRepository {
     override suspend fun postsBy(authorId: String, limit: Int): Result<List<Post>> = runCatching {
         val text = api.request(
             "GET",
-            "/rest/v1/posts?select=$POST_SELECT&author_id=eq.${enc(authorId)}&order=created_at.desc&limit=$limit",
+            "/rest/v1/posts?select=$POST_SELECT&author_id=eq.${enc(authorId)}&group_id=is.null&order=created_at.desc&limit=$limit",
         )
         api.json.decodeFromString<List<Post>>(text)
     }
 
-    override suspend fun createPost(authorId: String, body: String, lang: String): Result<Post> = runCatching {
-        val payload = buildJsonObject {
-            put("author_id", authorId)
-            put("body", body)
-            put("lang", lang)
-        }.toString()
+    override suspend fun postsByGroup(groupId: String, limit: Int): Result<List<Post>> = runCatching {
         val text = api.request(
-            "POST",
-            "/rest/v1/posts?select=id,author_id,body,lang,visibility,created_at",
-            payload,
-            prefer = "return=representation",
+            "GET",
+            "/rest/v1/posts?select=$POST_SELECT&group_id=eq.${enc(groupId)}&order=created_at.desc&limit=$limit",
         )
-        api.json.decodeFromString<List<Post>>(text).first()
+        api.json.decodeFromString<List<Post>>(text)
     }
+
+    override suspend fun createPost(authorId: String, body: String, lang: String, groupId: String?): Result<Post> =
+        runCatching {
+            val payload = buildJsonObject {
+                put("author_id", authorId)
+                put("body", body)
+                put("lang", lang)
+                if (groupId != null) put("group_id", groupId)
+            }.toString()
+            val text = api.request(
+                "POST",
+                "/rest/v1/posts?select=id,author_id,body,lang,visibility,created_at",
+                payload,
+                prefer = "return=representation",
+            )
+            api.json.decodeFromString<List<Post>>(text).first()
+        }
 
     override suspend fun setLiked(userId: String, postId: String, liked: Boolean): Result<Unit> = runCatching {
         if (liked) {

@@ -6,6 +6,7 @@
     <string name="sign_out">Sign out</string>
     <string name="new_post">New post</string>
     <string name="publish">Publish</string>
+    <string name="create">Create</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="back">Back</string>
@@ -23,6 +24,7 @@
     <string name="section_recent">Recent</string>
     <string name="section_people">People</string>
     <string name="section_posts">Posts</string>
+    <string name="section_groups">Groups</string>
     <string name="feed_empty">No posts yet. Be the first to post.</string>
     <string name="coming_soon">Coming soon</string>
     <string name="nav_home">Home</string>
@@ -30,8 +32,17 @@
     <string name="nav_groups">Groups</string>
     <string name="nav_profile">Profile</string>
     <string name="search_hint">Search people</string>
+    <string name="search_groups_hint">Search groups</string>
     <string name="follow">Follow</string>
     <string name="following">Following</string>
+    <string name="join">Join</string>
+    <string name="joined">Joined</string>
+    <string name="create_group">Create group</string>
+    <string name="group_name">Group name</string>
+    <string name="group_description">Description</string>
+    <string name="group_post_hint">Share something with the group</string>
+    <string name="privacy_public">Public</string>
+    <string name="privacy_private">Private</string>
     <string name="edit_profile">Edit profile</string>
     <string name="field_display_name">Display name</string>
     <string name="field_bio">Bio</string>
