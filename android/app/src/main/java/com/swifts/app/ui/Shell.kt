@@ -61,7 +61,7 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
 
     val feedVm: FeedViewModel = viewModel(
         factory = viewModelFactory {
-            initializer { FeedViewModel(services.posts, services.profiles, services.auth, services.lang) }
+            initializer { FeedViewModel(services.posts, services.profiles, services.auth, services.storage, services.lang) }
         },
     )
     val discoverVm: DiscoverViewModel = viewModel(
@@ -223,8 +223,8 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
         ComposerDialog(
             posting = feedState.posting,
             onDismiss = { showComposer = false },
-            onPublish = { text ->
-                feedVm.publish(text)
+            onPublish = { text, media ->
+                feedVm.publish(text, media)
                 showComposer = false
             },
         )
@@ -266,3 +266,4 @@ private fun SwiftsBottomBar(selected: Int, onSelect: (Int) -> Unit) {
         }
     }
 }
+

@@ -32,6 +32,18 @@ class SupabaseProfileRepository(private val api: SupabaseClient) : ProfileReposi
         api.json.decodeFromString<List<Profile>>(text).first()
     }
 
+    override suspend fun setAvatar(userId: String, url: String): Result<Profile> = runCatching {
+        val payload = buildJsonObject { put("avatar_url", url) }.toString()
+        api.json.decodeFromString<List<Profile>>(
+            api.request(
+                "PATCH",
+                "/rest/v1/profiles?id=eq.${enc(userId)}&select=$PROFILE_COLUMNS",
+                payload,
+                prefer = "return=representation",
+            )
+        ).first()
+    }
+
     override suspend fun search(query: String): Result<List<Profile>> = runCatching {
         // Keep only characters that are safe inside the PostgREST filter.
         val q = query.trim().filter { it.isLetterOrDigit() || it == '_' || it == '.' }
@@ -66,3 +78,4 @@ class SupabaseProfileRepository(private val api: SupabaseClient) : ProfileReposi
 
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
 }
+

@@ -84,5 +84,12 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+    <string name="add_media">Add photos or videos</string>
+    <string name="attach_adding">Adding…</string>
+    <string name="attach_failed">Some files could not be added.</string>
+    <string name="attach_too_large">Those files are too large together. Remove one or pick smaller files.</string>
+    <string name="video_label">Video</string>
+    <string name="change_photo">Change photo</string>
+    <string name="uploading_photo">Uploading photo…</string>
 </resources>
 

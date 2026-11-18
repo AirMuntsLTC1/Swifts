@@ -5,6 +5,9 @@ import kotlinx.serialization.Serializable
 /** Storage bucket that holds post images. Paths are stored as "<user_id>/<file>". */
 const val POST_MEDIA_BUCKET = "posts"
 
+/** Storage bucket for profile photos. Paths are stored as "<user_id>/<file>". */
+const val AVATAR_BUCKET = "avatars"
+
 @Serializable
 data class Author(
     val username: String,
@@ -59,3 +62,4 @@ data class ProfileUpdate(
     val work: String?,
     val school: String?,
 )
+

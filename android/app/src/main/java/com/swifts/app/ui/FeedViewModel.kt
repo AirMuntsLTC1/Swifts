@@ -2,10 +2,15 @@ package com.swifts.app.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.swifts.app.data.PickedMedia
 import com.swifts.app.domain.AuthRepository
+import com.swifts.app.domain.POST_MEDIA_BUCKET
+import com.swifts.app.domain.MediaStorage
 import com.swifts.app.domain.Post
+import com.swifts.app.domain.PostMedia
 import com.swifts.app.domain.PostRepository
 import com.swifts.app.domain.ProfileRepository
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,6 +31,7 @@ class FeedViewModel(
     private val posts: PostRepository,
     private val profiles: ProfileRepository,
     private val auth: AuthRepository,
+    private val storage: MediaStorage,
     private val lang: String,
 ) : ViewModel() {
 
@@ -74,16 +80,35 @@ class FeedViewModel(
         }
     }
 
-    fun publish(text: String) {
+    /**
+     * Creates the post, uploads each attachment to the posts bucket, then records each file in post_media.
+     * If any step fails, the post is deleted again so no half-finished post is left in the feed.
+     */
+    fun publish(text: String, media: List<PickedMedia> = emptyList()) {
         val uid = auth.currentUserId() ?: return
         val body = text.trim()
-        if (body.isEmpty()) return
+        if (body.isEmpty() && media.isEmpty()) return
         viewModelScope.launch {
             _state.update { it.copy(posting = true, error = null) }
-            posts.createPost(uid, body, lang).fold(
-                onSuccess = { post -> _state.update { it.copy(posting = false, items = listOf(post) + it.items) } },
-                onFailure = { e -> _state.update { it.copy(posting = false, error = e.message) } },
-            )
+            val post = posts.createPost(uid, body, lang).getOrElse { e ->
+                _state.update { it.copy(posting = false, error = e.message) }
+                return@launch
+            }
+            val attached = mutableListOf<PostMedia>()
+            for ((index, m) in media.withIndex()) {
+                val path = "$uid/${UUID.randomUUID()}.${m.ext}"
+                val failure = storage.upload(POST_MEDIA_BUCKET, path, m.bytes, m.mime).exceptionOrNull()
+                    ?: posts.addMedia(post.id, m.kind, path, index).exceptionOrNull()
+                if (failure != null) {
+                    posts.deletePost(post.id)
+                    _state.update { it.copy(posting = false, error = failure.message) }
+                    return@launch
+                }
+                attached += PostMedia(kind = m.kind, storage_path = path)
+            }
+            _state.update {
+                it.copy(posting = false, items = listOf(post.copy(post_media = attached)) + it.items)
+            }
         }
     }
 
@@ -96,7 +121,12 @@ class FeedViewModel(
         viewModelScope.launch {
             posts.updatePost(postId, text).fold(
                 onSuccess = { updated ->
-                    _state.update { s -> s.copy(items = s.items.map { if (it.id == postId) updated else it }) }
+                    _state.update { s ->
+                        s.copy(items = s.items.map {
+                            // Keep the attachments the edit response does not include.
+                            if (it.id == postId) updated.copy(post_media = it.post_media) else it
+                        })
+                    }
                 },
                 onFailure = { e -> _state.update { it.copy(error = e.message) } },
             )

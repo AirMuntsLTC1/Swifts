@@ -74,6 +74,18 @@ class SupabasePostRepository(private val api: SupabaseClient) : PostRepository {
         Unit
     }
 
+    override suspend fun addMedia(postId: String, kind: String, storagePath: String, position: Int): Result<Unit> =
+        runCatching {
+            val payload = buildJsonObject {
+                put("post_id", postId)
+                put("kind", kind)
+                put("storage_path", storagePath)
+                put("position", position)
+            }.toString()
+            api.request("POST", "/rest/v1/post_media", payload, prefer = "return=minimal")
+            Unit
+        }
+
     override suspend fun updatePost(postId: String, body: String): Result<Post> = runCatching {
         val payload = buildJsonObject { put("body", body) }.toString()
         api.json.decodeFromString<List<Post>>(

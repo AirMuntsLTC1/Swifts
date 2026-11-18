@@ -38,6 +38,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.swifts.app.R
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.swifts.app.data.PickedMedia
+import com.swifts.app.data.readPickedMedia
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import com.swifts.app.domain.Post
@@ -57,7 +63,7 @@ fun ProfileScreen(
     val vm: ProfileViewModel = viewModel(
         key = "profile-$userId",
         factory = viewModelFactory {
-            initializer { ProfileViewModel(services.profiles, services.posts, services.auth, userId) }
+            initializer { ProfileViewModel(services.profiles, services.posts, services.storage, services.auth, userId) }
         },
     )
     val state by vm.state.collectAsState()
@@ -113,8 +119,11 @@ fun ProfileScreen(
         EditProfileDialog(
             profile = profile,
             saving = state.saving,
+            uploadingAvatar = state.uploadingAvatar,
+            error = state.error,
             onDismiss = { vm.setEditing(false) },
             onSave = vm::save,
+            onPickAvatar = vm::uploadAvatar,
         )
     }
 }
@@ -238,9 +247,22 @@ private fun PostPreview(post: Post) {
 private fun EditProfileDialog(
     profile: Profile,
     saving: Boolean,
+    uploadingAvatar: Boolean,
+    error: String?,
     onDismiss: () -> Unit,
     onSave: (ProfileUpdate) -> Unit,
+    onPickAvatar: (PickedMedia) -> Unit,
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // Photo Picker: no storage permission needed. The picked image is resized and converted to JPEG before upload.
+    val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            scope.launch {
+                readPickedMedia(context, uri).onSuccess { onPickAvatar(it) }
+            }
+        }
+    }
     var displayName by rememberSaveable { mutableStateOf(profile.display_name) }
     var bio by rememberSaveable { mutableStateOf(profile.bio) }
     var city by rememberSaveable { mutableStateOf(profile.city.orEmpty()) }
@@ -253,6 +275,22 @@ private fun EditProfileDialog(
         title = { Text(stringResource(R.string.edit_profile), style = MaterialTheme.typography.titleMedium) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Avatar(profile.avatar_url, profile.display_name.ifBlank { profile.username }, size = 64.dp)
+                    Spacer(Modifier.width(12.dp))
+                    TextButton(
+                        enabled = !uploadingAvatar,
+                        onClick = {
+                            avatarPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        },
+                    ) {
+                        Text(stringResource(if (uploadingAvatar) R.string.uploading_photo else R.string.change_photo))
+                    }
+                }
+                error?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+                Spacer(Modifier.height(8.dp))
                 EditField(R.string.field_display_name, displayName) { displayName = it }
                 EditField(R.string.field_bio, bio) { bio = it }
                 EditField(R.string.label_city, city) { city = it }
