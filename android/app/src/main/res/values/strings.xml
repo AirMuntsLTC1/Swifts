@@ -10,6 +10,7 @@
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="back">Back</string>
+    <string name="close">Close</string>
     <string name="whats_on_your_mind">What\'s on your mind?</string>
     <string name="like">Like</string>
     <string name="liked">Liked</string>
@@ -25,11 +26,13 @@
     <string name="section_people">People</string>
     <string name="section_posts">Posts</string>
     <string name="section_groups">Groups</string>
+    <string name="section_chats">Chats</string>
     <string name="feed_empty">No posts yet. Be the first to post.</string>
     <string name="coming_soon">Coming soon</string>
     <string name="nav_home">Home</string>
     <string name="nav_search">Search</string>
     <string name="nav_groups">Groups</string>
+    <string name="nav_messages">Messages</string>
     <string name="nav_profile">Profile</string>
     <string name="search_hint">Search people</string>
     <string name="search_groups_hint">Search groups</string>
@@ -44,6 +47,7 @@
     <string name="privacy_public">Public</string>
     <string name="privacy_private">Private</string>
     <string name="edit_profile">Edit profile</string>
+    <string name="message">Message</string>
     <string name="field_display_name">Display name</string>
     <string name="field_bio">Bio</string>
     <string name="label_city">City</string>
@@ -51,4 +55,9 @@
     <string name="label_work">Work</string>
     <string name="label_school">School</string>
     <string name="no_posts_yet">No posts yet.</string>
+    <string name="no_chats">No conversations yet. Message someone from their profile.</string>
+    <string name="type_message">Message</string>
+    <string name="send">Send</string>
+    <string name="your_story">Your story</string>
+    <string name="uploading">Uploading…</string>
 </resources>

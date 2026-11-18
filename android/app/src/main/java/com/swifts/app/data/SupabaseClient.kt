@@ -24,8 +24,8 @@ class SupabaseClient(
     val http: OkHttpClient = OkHttpClient(),
     val json: Json = Json { ignoreUnknownKeys = true },
 ) {
-    private val base = BuildConfig.SUPABASE_URL.trimEnd('/')
-    private val anon = BuildConfig.SUPABASE_PUBLISHABLE_KEY
+    val base = BuildConfig.SUPABASE_URL.trimEnd('/')
+    val anon = BuildConfig.SUPABASE_PUBLISHABLE_KEY
     private val jsonType = "application/json; charset=utf-8".toMediaType()
 
     /** Valid access token, refreshed when close to expiry. Null when signed out. */

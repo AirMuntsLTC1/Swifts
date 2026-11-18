@@ -34,6 +34,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.swifts.app.R
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.swifts.app.domain.Post
 import com.swifts.app.domain.Profile
 import com.swifts.app.domain.ProfileUpdate
@@ -45,6 +47,7 @@ fun ProfileScreen(
     userId: String,
     onBack: (() -> Unit)?,
     onSignOut: () -> Unit,
+    onOpenChat: (String, String) -> Unit,
 ) {
     val vm: ProfileViewModel = viewModel(
         key = "profile-$userId",
@@ -55,6 +58,7 @@ fun ProfileScreen(
     val state by vm.state.collectAsState()
     val colors = LocalSwiftsColors.current
     val profile = state.profile
+    val scope = rememberCoroutineScope()
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
@@ -86,6 +90,13 @@ fun ProfileScreen(
                 onToggleFollow = vm::toggleFollow,
                 onEdit = { vm.setEditing(true) },
                 onSignOut = onSignOut,
+                onMessage = {
+                    scope.launch {
+                        services.messages.startConversation(userId).onSuccess { id ->
+                            onOpenChat(id, profile?.username.orEmpty())
+                        }
+                    }
+                },
             )
         }
     }
@@ -107,6 +118,7 @@ private fun ProfileBody(
     onToggleFollow: () -> Unit,
     onEdit: () -> Unit,
     onSignOut: () -> Unit,
+    onMessage: () -> Unit,
 ) {
     val colors = LocalSwiftsColors.current
     val name = profile.display_name.ifBlank { profile.username }
@@ -144,6 +156,10 @@ private fun ProfileBody(
         }
     } else {
         FollowButton(following = state.following, onClick = onToggleFollow)
+        Spacer(Modifier.height(8.dp))
+        OutlinedButton(onClick = onMessage, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.message), style = MaterialTheme.typography.labelLarge)
+        }
     }
 
     SectionLabel(stringResource(R.string.section_posts))

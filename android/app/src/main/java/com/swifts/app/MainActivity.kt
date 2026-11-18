@@ -19,8 +19,11 @@ import com.swifts.app.data.SessionStore
 import com.swifts.app.data.SupabaseAuthRepository
 import com.swifts.app.data.SupabaseClient
 import com.swifts.app.data.SupabaseGroupRepository
+import com.swifts.app.data.SupabaseMediaStorage
+import com.swifts.app.data.SupabaseMessageRepository
 import com.swifts.app.data.SupabasePostRepository
 import com.swifts.app.data.SupabaseProfileRepository
+import com.swifts.app.data.SupabaseStoryRepository
 import com.swifts.app.ui.AppServices
 import com.swifts.app.ui.AuthScreen
 import com.swifts.app.ui.AuthViewModel
@@ -44,6 +47,9 @@ class MainActivity : ComponentActivity() {
             posts = SupabasePostRepository(api),
             profiles = SupabaseProfileRepository(api),
             groups = SupabaseGroupRepository(api),
+            stories = SupabaseStoryRepository(api),
+            messages = SupabaseMessageRepository(api),
+            storage = SupabaseMediaStorage(api),
             lang = Locale.getDefault().language,
         )
 

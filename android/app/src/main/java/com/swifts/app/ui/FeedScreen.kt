@@ -34,9 +34,10 @@ import com.swifts.app.domain.Post
 import com.swifts.app.ui.theme.LocalSwiftsColors
 
 @Composable
-fun FeedScreen(vm: FeedViewModel, onOpenProfile: (String) -> Unit) {
+fun FeedScreen(vm: FeedViewModel, onOpenProfile: (String) -> Unit, header: @Composable () -> Unit = {}) {
     val state by vm.state.collectAsState()
     Column(Modifier.fillMaxSize()) {
+        header()
         Row(
             Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -48,7 +49,9 @@ fun FeedScreen(vm: FeedViewModel, onOpenProfile: (String) -> Unit) {
                 vm.setShowFollowing(true)
             }
         }
-        FeedBody(state = state, onLike = vm::toggleLike, onOpenProfile = onOpenProfile)
+        Box(Modifier.weight(1f)) {
+            FeedBody(state = state, onLike = vm::toggleLike, onOpenProfile = onOpenProfile)
+        }
     }
 }
 

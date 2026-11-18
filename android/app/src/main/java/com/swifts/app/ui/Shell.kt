@@ -29,7 +29,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.swifts.app.R
 import com.swifts.app.ui.theme.LocalSwiftsColors
 
-// Tabs: 0 home, 1 search, 2 groups, 3 profile (messages and stories come in phase 5)
+// Tabs: 0 home, 1 search, 2 groups, 3 messages, 4 profile
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
@@ -38,6 +38,8 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
     var tab by rememberSaveable { mutableStateOf(0) }
     var openProfile by rememberSaveable { mutableStateOf<String?>(null) }
     var openGroup by rememberSaveable { mutableStateOf<String?>(null) }
+    var openChatId by rememberSaveable { mutableStateOf<String?>(null) }
+    var openChatTitle by rememberSaveable { mutableStateOf("") }
     var showComposer by rememberSaveable { mutableStateOf(false) }
 
     val feedVm: FeedViewModel = viewModel(
@@ -51,8 +53,17 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
     val groupsVm: GroupsViewModel = viewModel(
         factory = viewModelFactory { initializer { GroupsViewModel(services.groups, services.auth) } },
     )
+    val messagesVm: MessagesViewModel = viewModel(
+        factory = viewModelFactory { initializer { MessagesViewModel(services.messages, services.auth) } },
+    )
     val feedState by feedVm.state.collectAsState()
-    val showingSubpage = openProfile != null || openGroup != null
+
+    val showingSubpage = openProfile != null || openGroup != null || openChatId != null
+    fun closeSubpages() {
+        openProfile = null
+        openGroup = null
+        openChatId = null
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -73,8 +84,7 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
         bottomBar = {
             SwiftsBottomBar(selected = tab, onSelect = {
                 tab = it
-                openProfile = null
-                openGroup = null
+                closeSubpages()
             })
         },
         floatingActionButton = {
@@ -84,11 +94,7 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
                     containerColor = colors.accent,
                     contentColor = Color.White,
                 ) {
-                    AssetIcon(
-                        name = "ic_plus",
-                        tint = Color.White,
-                        contentDescription = stringResource(R.string.new_post),
-                    )
+                    AssetIcon(name = "ic_plus", tint = Color.White, contentDescription = stringResource(R.string.new_post))
                 }
             }
         },
@@ -96,30 +102,51 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
         Box(Modifier.padding(padding).fillMaxSize()) {
             val pid = openProfile
             val gid = openGroup
+            val cid = openChatId
             when {
                 pid != null -> ProfileScreen(
                     services = services,
                     userId = pid,
                     onBack = { openProfile = null },
                     onSignOut = onSignOut,
+                    onOpenChat = { id, title ->
+                        openProfile = null
+                        openChatId = id
+                        openChatTitle = title
+                    },
                 )
                 gid != null -> GroupScreen(
                     services = services,
                     groupId = gid,
                     onBack = { openGroup = null },
                 )
-                tab == 0 -> FeedScreen(feedVm, onOpenProfile = { openProfile = it })
+                cid != null -> ChatScreen(
+                    services = services,
+                    conversationId = cid,
+                    title = openChatTitle,
+                    onBack = { openChatId = null },
+                )
+                tab == 0 -> FeedScreen(
+                    vm = feedVm,
+                    onOpenProfile = { openProfile = it },
+                    header = { StoriesRow(services) },
+                )
                 tab == 1 -> DiscoverScreen(discoverVm, onOpenProfile = { openProfile = it })
                 tab == 2 -> GroupsScreen(groupsVm, onOpen = { openGroup = it })
-                tab == 3 -> ProfileScreen(
+                tab == 3 -> MessagesScreen(messagesVm, onOpen = { id, title ->
+                    openChatId = id
+                    openChatTitle = title
+                })
+                else -> ProfileScreen(
                     services = services,
                     userId = meId,
                     onBack = null,
                     onSignOut = onSignOut,
+                    onOpenChat = { id, title ->
+                        openChatId = id
+                        openChatTitle = title
+                    },
                 )
-                else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(stringResource(R.string.coming_soon), style = MaterialTheme.typography.bodyLarge, color = colors.mutedText)
-                }
             }
         }
     }
@@ -140,6 +167,7 @@ private fun titleFor(tab: Int): Int = when (tab) {
     0 -> R.string.feed_title
     1 -> R.string.nav_search
     2 -> R.string.nav_groups
+    3 -> R.string.nav_messages
     else -> R.string.nav_profile
 }
 
@@ -150,7 +178,8 @@ private fun SwiftsBottomBar(selected: Int, onSelect: (Int) -> Unit) {
         Triple(R.string.nav_home, "ic_home", 0),
         Triple(R.string.nav_search, "ic_search", 1),
         Triple(R.string.nav_groups, "ic_group", 2),
-        Triple(R.string.nav_profile, "ic_person", 3),
+        Triple(R.string.nav_messages, "ic_chat", 3),
+        Triple(R.string.nav_profile, "ic_person", 4),
     )
     NavigationBar(containerColor = MaterialTheme.colorScheme.background) {
         items.forEach { (labelRes, icon, index) ->
