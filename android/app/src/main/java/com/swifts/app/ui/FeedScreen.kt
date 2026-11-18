@@ -1,7 +1,7 @@
 package com.swifts.app.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,15 +16,22 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,6 +42,9 @@ import com.swifts.app.ui.theme.LocalSwiftsColors
 @Composable
 fun FeedScreen(vm: FeedViewModel, onOpenProfile: (String) -> Unit, header: @Composable () -> Unit = {}) {
     val state by vm.state.collectAsState()
+    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    var deletingId by rememberSaveable { mutableStateOf<String?>(null) }
+
     Column(Modifier.fillMaxSize()) {
         header()
         Row(
@@ -49,16 +59,56 @@ fun FeedScreen(vm: FeedViewModel, onOpenProfile: (String) -> Unit, header: @Comp
             }
         }
         Box(Modifier.weight(1f)) {
-            FeedBody(state = state, onLike = vm::toggleLike, onOpenProfile = onOpenProfile)
+            FeedBody(
+                state = state,
+                meId = vm.meId,
+                onLike = vm::toggleLike,
+                onOpenProfile = onOpenProfile,
+                onEdit = { editingId = it },
+                onDelete = { deletingId = it },
+            )
         }
+    }
+
+    state.items.find { it.id == editingId }?.let { post ->
+        EditPostDialog(
+            initial = post.body,
+            onDismiss = { editingId = null },
+            onSave = { text ->
+                vm.updatePost(post.id, text)
+                editingId = null
+            },
+        )
+    }
+
+    deletingId?.let { id ->
+        AlertDialog(
+            onDismissRequest = { deletingId = null },
+            title = { Text(stringResource(R.string.delete_post_title)) },
+            text = { Text(stringResource(R.string.delete_post_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.deletePost(id)
+                    deletingId = null
+                }) {
+                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deletingId = null }) { Text(stringResource(R.string.cancel)) }
+            },
+        )
     }
 }
 
 @Composable
 private fun FeedBody(
     state: FeedUiState,
+    meId: String,
     onLike: (String) -> Unit,
     onOpenProfile: (String) -> Unit,
+    onEdit: (String) -> Unit,
+    onDelete: (String) -> Unit,
 ) {
     val colors = LocalSwiftsColors.current
     when {
@@ -91,8 +141,11 @@ private fun FeedBody(
                 PostItem(
                     post = post,
                     liked = post.id in state.liked,
+                    isMine = post.author_id == meId,
                     onLike = { onLike(post.id) },
                     onOpenProfile = { onOpenProfile(post.author_id) },
+                    onEdit = { onEdit(post.id) },
+                    onDelete = { onDelete(post.id) },
                 )
             }
         }
@@ -100,7 +153,15 @@ private fun FeedBody(
 }
 
 @Composable
-private fun PostItem(post: Post, liked: Boolean, onLike: () -> Unit, onOpenProfile: () -> Unit) {
+private fun PostItem(
+    post: Post,
+    liked: Boolean,
+    isMine: Boolean,
+    onLike: () -> Unit,
+    onOpenProfile: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
     val colors = LocalSwiftsColors.current
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
         Text(
@@ -123,17 +184,52 @@ private fun PostItem(post: Post, liked: Boolean, onLike: () -> Unit, onOpenProfi
             ActionLabel(stringResource(R.string.comment), active = false, onClick = {})
             Spacer(Modifier.width(20.dp))
             ActionLabel(stringResource(R.string.share), active = false, onClick = {})
+            if (isMine) {
+                Spacer(Modifier.width(20.dp))
+                ActionLabel(stringResource(R.string.edit_post), active = false, onClick = onEdit)
+                Spacer(Modifier.width(20.dp))
+                ActionLabel(stringResource(R.string.delete), active = false, onClick = onDelete, danger = true)
+            }
         }
     }
 }
 
 @Composable
-private fun ActionLabel(text: String, active: Boolean, onClick: () -> Unit) {
+private fun EditPostDialog(initial: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    var text by rememberSaveable { mutableStateOf(initial) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.edit_post)) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { if (it.length <= MAX_POST_LENGTH) text = it },
+                minLines = 3,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(enabled = text.isNotBlank(), onClick = { onSave(text) }) {
+                Text(stringResource(R.string.save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun ActionLabel(text: String, active: Boolean, onClick: () -> Unit, danger: Boolean = false) {
     val colors = LocalSwiftsColors.current
     Text(
         text,
         style = MaterialTheme.typography.labelMedium,
-        color = if (active) colors.accent else colors.mutedText,
+        color = when {
+            active -> colors.accent
+            danger -> MaterialTheme.colorScheme.error
+            else -> colors.mutedText
+        },
         modifier = Modifier.clickable(onClick = onClick).padding(vertical = 6.dp),
     )
 }

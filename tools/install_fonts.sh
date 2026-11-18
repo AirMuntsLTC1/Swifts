@@ -25,5 +25,5 @@ canon inter_medium.ttf   "Inter-Medium.ttf"   "Inter_24pt-Medium.ttf"   "Inter_1
 canon inter_semibold.ttf "Inter-SemiBold.ttf" "Inter_24pt-SemiBold.ttf" "Inter_18pt-SemiBold.ttf"
 canon inter_bold.ttf     "Inter-Bold.ttf"     "Inter_24pt-Bold.ttf"     "Inter_18pt-Bold.ttf"
 
-rm -rf "$TMP"
+rm -rf "$ROOT/android/app/src/main/res/font" "$TMP"
 echo "Done. Fonts are in $DEST"

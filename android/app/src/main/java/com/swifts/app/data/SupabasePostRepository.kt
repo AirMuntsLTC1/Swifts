@@ -73,5 +73,22 @@ class SupabasePostRepository(private val api: SupabaseClient) : PostRepository {
         Unit
     }
 
+    override suspend fun updatePost(postId: String, body: String): Result<Post> = runCatching {
+        val payload = buildJsonObject { put("body", body) }.toString()
+        api.json.decodeFromString<List<Post>>(
+            api.request(
+                "PATCH",
+                "/rest/v1/posts?id=eq.${enc(postId)}&select=$POST_SELECT",
+                payload,
+                prefer = "return=representation",
+            )
+        ).first()
+    }
+
+    override suspend fun deletePost(postId: String): Result<Unit> = runCatching {
+        api.request("DELETE", "/rest/v1/posts?id=eq.${enc(postId)}")
+        Unit
+    }
+
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
 }

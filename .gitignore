@@ -8,3 +8,5 @@ android/local.properties
 *.jks
 *.keystore
 swifts-keys/
+# Supabase CLI local cache (contains the linked project id)
+supabase/.temp/

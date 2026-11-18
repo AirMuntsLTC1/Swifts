@@ -68,4 +68,8 @@
     <string name="someone">Someone</string>
     <string name="no_notifications">No notifications yet.</string>
     <string name="notifications_title">Notifications</string>
+    <string name="edit_post">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="delete_post_title">Delete post?</string>
+    <string name="delete_post_body">This post will be removed for everyone. This can\'t be undone.</string>
 </resources>

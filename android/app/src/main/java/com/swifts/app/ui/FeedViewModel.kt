@@ -72,6 +72,31 @@ class FeedViewModel(
         }
     }
 
+    /** The signed-in user's id, used to show edit and delete on your own posts. */
+    val meId: String get() = auth.currentUserId().orEmpty()
+
+    fun updatePost(postId: String, body: String) {
+        val text = body.trim()
+        if (text.isEmpty()) return
+        viewModelScope.launch {
+            posts.updatePost(postId, text).fold(
+                onSuccess = { updated ->
+                    _state.update { s -> s.copy(items = s.items.map { if (it.id == postId) updated else it }) }
+                },
+                onFailure = { e -> _state.update { it.copy(error = e.message) } },
+            )
+        }
+    }
+
+    fun deletePost(postId: String) {
+        viewModelScope.launch {
+            posts.deletePost(postId).fold(
+                onSuccess = { _state.update { s -> s.copy(items = s.items.filterNot { it.id == postId }) } },
+                onFailure = { e -> _state.update { it.copy(error = e.message) } },
+            )
+        }
+    }
+
     fun toggleLike(postId: String) {
         val uid = auth.currentUserId() ?: return
         val nowLiked = postId !in _state.value.liked

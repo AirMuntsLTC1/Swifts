@@ -6,5 +6,7 @@ interface PostRepository {
     suspend fun postsBy(authorId: String, limit: Int = 30): Result<List<Post>>
     suspend fun postsByGroup(groupId: String, limit: Int = 30): Result<List<Post>>
     suspend fun createPost(authorId: String, body: String, lang: String, groupId: String? = null): Result<Post>
+    suspend fun updatePost(postId: String, body: String): Result<Post>
+    suspend fun deletePost(postId: String): Result<Unit>
     suspend fun setLiked(userId: String, postId: String, liked: Boolean): Result<Unit>
 }

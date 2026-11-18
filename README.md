@@ -1,13 +1,14 @@
 # Swifts
 
-Multi-language social platform.
+Multi-language social platform. No Flutter.
 
-Stack (no Flutter):
 - Android client: Kotlin + Jetpack Compose (android/)
-- Backend functions: TypeScript on Supabase Edge Functions (services/edge/)
+- Database and auth: Supabase (supabase/migrations/, RLS on every table)
+- Edge functions: TypeScript (supabase/functions/)
 - Media worker: PHP (services/media-php/)
+- Web pages: PHP with the global theme (services/web/)
 - Tooling and checks: Python (tools/)
 - Native core: C++ (native/)
-- Database: PostgreSQL on Supabase (supabase/migrations/)
 
-Status: Phase 1 files are written but NOT applied. Run the SQL on Supabase only after the app is complete.
+Deploy the database with `supabase db push --remote` and functions with `supabase functions deploy <name>`.
+CI runs on every push: contracts, theme rules, PHP lint, C++ compile, and the signed arm64 debug APK.
