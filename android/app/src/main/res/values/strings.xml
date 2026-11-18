@@ -72,4 +72,12 @@
     <string name="delete">Delete</string>
     <string name="delete_post_title">Delete post?</string>
     <string name="delete_post_body">This post will be removed for everyone. This can\'t be undone.</string>
+    <string name="comments_title">Comments</string>
+    <string name="comment_hint">Write a comment</string>
+    <string name="no_comments">No comments yet. Be the first.</string>
+    <string name="creator">Creator</string>
+    <string name="top_comment">Top</string>
+    <string name="reply">Reply</string>
+    <string name="replying_to">Replying to @%1$s</string>
+    <string name="notif_comment">%1$s commented on your post</string>
 </resources>

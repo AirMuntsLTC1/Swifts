@@ -40,7 +40,12 @@ import com.swifts.app.domain.Post
 import com.swifts.app.ui.theme.LocalSwiftsColors
 
 @Composable
-fun FeedScreen(vm: FeedViewModel, onOpenProfile: (String) -> Unit, header: @Composable () -> Unit = {}) {
+fun FeedScreen(
+    vm: FeedViewModel,
+    onOpenProfile: (String) -> Unit,
+    onComment: (String, String) -> Unit = { _, _ -> },
+    header: @Composable () -> Unit = {},
+) {
     val state by vm.state.collectAsState()
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     var deletingId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -66,6 +71,7 @@ fun FeedScreen(vm: FeedViewModel, onOpenProfile: (String) -> Unit, header: @Comp
                 onOpenProfile = onOpenProfile,
                 onEdit = { editingId = it },
                 onDelete = { deletingId = it },
+                onComment = onComment,
             )
         }
     }
@@ -109,6 +115,7 @@ private fun FeedBody(
     onOpenProfile: (String) -> Unit,
     onEdit: (String) -> Unit,
     onDelete: (String) -> Unit,
+    onComment: (String, String) -> Unit,
 ) {
     val colors = LocalSwiftsColors.current
     when {
@@ -146,6 +153,7 @@ private fun FeedBody(
                     onOpenProfile = { onOpenProfile(post.author_id) },
                     onEdit = { onEdit(post.id) },
                     onDelete = { onDelete(post.id) },
+                    onComment = { onComment(post.id, post.author_id) },
                 )
             }
         }
@@ -161,6 +169,7 @@ private fun PostItem(
     onOpenProfile: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onComment: () -> Unit,
 ) {
     val colors = LocalSwiftsColors.current
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
@@ -181,7 +190,7 @@ private fun PostItem(
         Row(verticalAlignment = Alignment.CenterVertically) {
             ActionLabel(stringResource(if (liked) R.string.liked else R.string.like), active = liked, onClick = onLike)
             Spacer(Modifier.width(20.dp))
-            ActionLabel(stringResource(R.string.comment), active = false, onClick = {})
+            ActionLabel(stringResource(R.string.comment), active = false, onClick = onComment)
             Spacer(Modifier.width(20.dp))
             ActionLabel(stringResource(R.string.share), active = false, onClick = {})
             if (isMine) {

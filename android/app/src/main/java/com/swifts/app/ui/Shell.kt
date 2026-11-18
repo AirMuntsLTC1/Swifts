@@ -42,6 +42,8 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
     var openChatTitle by rememberSaveable { mutableStateOf("") }
     var openNotifications by rememberSaveable { mutableStateOf(false) }
     var showComposer by rememberSaveable { mutableStateOf(false) }
+    var commentingPost by rememberSaveable { mutableStateOf<String?>(null) }
+    var commentingAuthor by rememberSaveable { mutableStateOf("") }
 
     val feedVm: FeedViewModel = viewModel(
         factory = viewModelFactory {
@@ -147,6 +149,10 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
                     vm = feedVm,
                     onOpenProfile = { openProfile = it },
                     header = { StoriesRow(services) },
+                    onComment = { postId, authorId ->
+                        commentingPost = postId
+                        commentingAuthor = authorId
+                    },
                 )
                 tab == 1 -> DiscoverScreen(discoverVm, onOpenProfile = { openProfile = it })
                 tab == 2 -> GroupsScreen(groupsVm, onOpen = { openGroup = it })
@@ -166,6 +172,15 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
                 )
             }
         }
+    }
+
+    commentingPost?.let { postId ->
+        CommentsDialog(
+            services = services,
+            postId = postId,
+            postAuthorId = commentingAuthor,
+            onClose = { commentingPost = null },
+        )
     }
 
     if (showComposer) {

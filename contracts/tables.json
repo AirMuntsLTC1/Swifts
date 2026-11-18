@@ -1,8 +1,23 @@
 {
   "tables": [
-    "profiles", "follows", "posts", "post_media", "comments", "likes",
-    "hashtags", "post_hashtags", "groups", "group_members", "stories",
-    "conversations", "conversation_members", "messages", "notifications",
-    "user_settings", "translations", "reports"
+    "profiles",
+    "follows",
+    "posts",
+    "post_media",
+    "comments",
+    "likes",
+    "hashtags",
+    "post_hashtags",
+    "groups",
+    "group_members",
+    "stories",
+    "conversations",
+    "conversation_members",
+    "messages",
+    "notifications",
+    "user_settings",
+    "translations",
+    "reports",
+    "comment_likes"
   ]
 }

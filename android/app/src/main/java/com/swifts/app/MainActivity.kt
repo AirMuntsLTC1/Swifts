@@ -16,6 +16,7 @@ import coil.Coil
 import coil.ImageLoader
 import coil.decode.SvgDecoder
 import com.swifts.app.data.SessionStore
+import com.swifts.app.data.SupabaseCommentRepository
 import com.swifts.app.data.SupabaseAuthRepository
 import com.swifts.app.data.SupabaseClient
 import com.swifts.app.data.SupabaseGroupRepository
@@ -51,6 +52,7 @@ class MainActivity : ComponentActivity() {
             stories = SupabaseStoryRepository(api),
             messages = SupabaseMessageRepository(api),
             notifications = SupabaseNotificationRepository(api),
+            comments = SupabaseCommentRepository(api),
             storage = SupabaseMediaStorage(api),
             lang = Locale.getDefault().language,
         )

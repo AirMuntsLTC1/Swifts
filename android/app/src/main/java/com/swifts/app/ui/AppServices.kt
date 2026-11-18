@@ -1,6 +1,7 @@
 package com.swifts.app.ui
 
 import com.swifts.app.domain.AuthRepository
+import com.swifts.app.domain.CommentRepository
 import com.swifts.app.domain.GroupRepository
 import com.swifts.app.domain.MediaStorage
 import com.swifts.app.domain.MessageRepository
@@ -18,6 +19,7 @@ data class AppServices(
     val stories: StoryRepository,
     val messages: MessageRepository,
     val notifications: NotificationRepository,
+    val comments: CommentRepository,
     val storage: MediaStorage,
     val lang: String,
 )

@@ -90,6 +90,7 @@ private fun NotificationRow(n: AppNotification, highlighted: Boolean, onClick: (
     val template = when (n.kind) {
         "like" -> R.string.notif_like
         "follow" -> R.string.notif_follow
+        "comment" -> R.string.notif_comment
         else -> R.string.notif_message
     }
     Row(
