@@ -33,12 +33,14 @@ private val OUTLINE = Color(0xFFC4C7CC)
 private val WASH = Color(0xFFF0F2F5)       // pills, avatars, bars
 private val WASH_STRONG = Color(0xFFEEEEF0)
 private val WHITE = Color(0xFFFFFFFF)
+private val SURFACE_LIGHT = Color(0xFFF7F7F8)   // web bg-surface
 
 private val DARK_INK = Color(0xFFF2F2F4)
 private val DARK_MUTED = Color(0xFFA8ABB0)
 private val DARK_LINE = Color(0xFF2C2C2E)
 private val DARK_BG = Color(0xFF121212)
 private val DARK_SURFACE = Color(0xFF1C1C1E)
+private val DARK_BRAND_HOVER = Color(0xFFD6D6D9) // web brand-hover (dark)
 
 @Immutable
 data class SwiftsColors(
@@ -47,6 +49,7 @@ data class SwiftsColors(
     val accent: Color,
     val accentSoft: Color,
     val neutralPill: Color,
+    val brandHover: Color,
 )
 
 private val LightColors = SwiftsColors(
@@ -55,6 +58,7 @@ private val LightColors = SwiftsColors(
     accent = INK,
     accentSoft = WASH_STRONG,
     neutralPill = WASH,
+    brandHover = INK_SOFT,
 )
 
 private val DarkColors = SwiftsColors(
@@ -63,6 +67,7 @@ private val DarkColors = SwiftsColors(
     accent = DARK_INK,
     accentSoft = DARK_LINE,
     neutralPill = DARK_LINE,
+    brandHover = DARK_BRAND_HOVER,
 )
 
 val LocalSwiftsColors = staticCompositionLocalOf { LightColors }
@@ -74,6 +79,7 @@ private val LightScheme = lightColorScheme(
     background = WHITE, onBackground = INK,
     surface = WHITE, onSurface = INK,
     surfaceVariant = WASH, onSurfaceVariant = MUTED,
+    surfaceContainerLow = SURFACE_LIGHT,
     surfaceTint = WHITE,
     outline = OUTLINE, outlineVariant = LINE,
     primaryContainer = WASH_STRONG, onPrimaryContainer = INK,
@@ -89,6 +95,7 @@ private val DarkScheme = darkColorScheme(
     background = DARK_BG, onBackground = DARK_INK,
     surface = DARK_SURFACE, onSurface = DARK_INK,
     surfaceVariant = DARK_LINE, onSurfaceVariant = DARK_MUTED,
+    surfaceContainerLow = DARK_SURFACE,
     surfaceTint = DARK_BG,
     outline = DARK_MUTED, outlineVariant = DARK_LINE,
     primaryContainer = DARK_LINE, onPrimaryContainer = DARK_INK,
@@ -164,3 +171,4 @@ fun SwiftsTheme(
         MaterialTheme(colorScheme = scheme, typography = typography, content = content)
     }
 }
+
