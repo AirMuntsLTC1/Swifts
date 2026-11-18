@@ -3,6 +3,7 @@ package com.swifts.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
@@ -13,6 +14,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import coil.Coil
 import coil.ImageLoader
 import coil.decode.SvgDecoder
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
 import com.swifts.app.data.SessionStore
 import com.swifts.app.data.SupabaseAuthRepository
 import com.swifts.app.data.SupabaseClient
@@ -24,6 +27,7 @@ import com.swifts.app.data.SupabaseNotificationRepository
 import com.swifts.app.data.SupabasePostRepository
 import com.swifts.app.data.SupabaseProfileRepository
 import com.swifts.app.data.SupabaseStoryRepository
+import com.swifts.app.data.ThemeMode
 import com.swifts.app.ui.AppServices
 import com.swifts.app.ui.AuthScreen
 import com.swifts.app.ui.AuthViewModel
@@ -35,8 +39,20 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Images: decoded bitmaps use up to 20% of app memory, and downloads are kept on disk (100 MB)
+        // so feed images are not fetched again on every visit.
         Coil.setImageLoader(
-            ImageLoader.Builder(this).components { add(SvgDecoder.Factory()) }.build()
+            ImageLoader.Builder(this)
+                .components { add(SvgDecoder.Factory()) }
+                .memoryCache { MemoryCache.Builder(this).maxSizePercent(0.2).build() }
+                .diskCache {
+                    DiskCache.Builder()
+                        .directory(cacheDir.resolve("image_cache"))
+                        .maxSizeBytes(100L * 1024 * 1024)
+                        .build()
+                }
+                .crossfade(true)
+                .build()
         )
 
         val store = SessionStore(applicationContext)
@@ -52,11 +68,18 @@ class MainActivity : ComponentActivity() {
             notifications = SupabaseNotificationRepository(api),
             comments = SupabaseCommentRepository(api),
             storage = SupabaseMediaStorage(api),
+            sessionStore = store,
             lang = Locale.getDefault().language,
         )
 
         setContent {
-            SwiftsTheme {
+            val themeMode by store.themeMode.collectAsState()
+            val darkTheme = when (themeMode) {
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+            SwiftsTheme(darkTheme = darkTheme) {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     // Driven by the stored session. Signing in or out, or an expired session, switches screens here.
                     val signedIn by store.signedIn.collectAsState()

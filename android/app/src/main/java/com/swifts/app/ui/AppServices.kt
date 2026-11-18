@@ -1,5 +1,6 @@
 package com.swifts.app.ui
 
+import com.swifts.app.data.SessionStore
 import com.swifts.app.domain.AuthRepository
 import com.swifts.app.domain.CommentRepository
 import com.swifts.app.domain.GroupRepository
@@ -21,5 +22,6 @@ data class AppServices(
     val notifications: NotificationRepository,
     val comments: CommentRepository,
     val storage: MediaStorage,
+    val sessionStore: SessionStore,
     val lang: String,
 )

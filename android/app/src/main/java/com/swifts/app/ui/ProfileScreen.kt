@@ -1,6 +1,10 @@
 package com.swifts.app.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +42,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import com.swifts.app.domain.Post
 import com.swifts.app.domain.Profile
+import com.swifts.app.data.ThemeMode
 import com.swifts.app.domain.ProfileUpdate
 import com.swifts.app.ui.theme.LocalSwiftsColors
 
@@ -59,6 +64,7 @@ fun ProfileScreen(
     val colors = LocalSwiftsColors.current
     val profile = state.profile
     val scope = rememberCoroutineScope()
+    val themeMode by services.sessionStore.themeMode.collectAsState()
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
@@ -97,6 +103,8 @@ fun ProfileScreen(
                         }
                     }
                 },
+                themeMode = themeMode,
+                onThemeChange = services.sessionStore::setThemeMode,
             )
         }
     }
@@ -119,6 +127,8 @@ private fun ProfileBody(
     onEdit: () -> Unit,
     onSignOut: () -> Unit,
     onMessage: () -> Unit,
+    themeMode: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit,
 ) {
     val colors = LocalSwiftsColors.current
     val name = profile.display_name.ifBlank { profile.username }
@@ -148,6 +158,9 @@ private fun ProfileBody(
 
     Spacer(Modifier.height(16.dp))
     if (state.isMe) {
+        SectionLabel(stringResource(R.string.section_appearance))
+        ThemeSelector(current = themeMode, onSelect = onThemeChange)
+        Spacer(Modifier.height(16.dp))
         OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.edit_profile), style = MaterialTheme.typography.labelLarge)
         }
@@ -172,6 +185,34 @@ private fun ProfileBody(
         )
     }
     state.posts.forEach { PostPreview(it) }
+}
+
+/** Light, dark, or follow the system. The choice is kept on this device. */
+@Composable
+private fun ThemeSelector(current: ThemeMode, onSelect: (ThemeMode) -> Unit) {
+    val colors = LocalSwiftsColors.current
+    Row(Modifier.padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(
+            ThemeMode.SYSTEM to R.string.theme_system,
+            ThemeMode.LIGHT to R.string.theme_light,
+            ThemeMode.DARK to R.string.theme_dark,
+        ).forEach { (mode, label) ->
+            val selected = mode == current
+            Box(
+                Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(if (selected) colors.accentSoft else colors.neutralPill)
+                    .clickable(role = Role.RadioButton) { onSelect(mode) }
+                    .padding(horizontal = 14.dp, vertical = 7.dp),
+            ) {
+                Text(
+                    stringResource(label),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (selected) colors.accent else colors.primaryText,
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -253,3 +294,4 @@ private fun EditField(labelRes: Int, value: String, onChange: (String) -> Unit) 
         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
     )
 }
+

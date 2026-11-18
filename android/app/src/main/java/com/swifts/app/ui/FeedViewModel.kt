@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 
 data class FeedUiState(
     val loading: Boolean = false,
+    val refreshing: Boolean = false,
     val posting: Boolean = false,
     val showFollowing: Boolean = false,
     val items: List<Post> = emptyList(),
@@ -39,13 +40,23 @@ class FeedViewModel(
         load()
     }
 
+    /** Pull-to-refresh. Uses its own flag so the full-screen spinner does not flash over the list. */
+    fun refresh() {
+        _state.update { it.copy(refreshing = true) }
+        load()
+    }
+
     fun load() {
-        val uid = auth.currentUserId() ?: return
+        val uid = auth.currentUserId()
+        if (uid == null) {
+            _state.update { it.copy(refreshing = false) }
+            return
+        }
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }
             val result = if (_state.value.showFollowing) {
                 val ids = profiles.followingIds(uid).getOrElse { e ->
-                    _state.update { it.copy(loading = false, error = e.message) }
+                    _state.update { it.copy(loading = false, refreshing = false, error = e.message) }
                     return@launch
                 }
                 posts.followingFeed((ids + uid).toList())
@@ -53,8 +64,12 @@ class FeedViewModel(
                 posts.feed(lang)
             }
             result.fold(
-                onSuccess = { page -> _state.update { it.copy(loading = false, items = page.items) } },
-                onFailure = { e -> _state.update { it.copy(loading = false, error = e.message) } },
+                onSuccess = { page ->
+                    _state.update { it.copy(loading = false, refreshing = false, items = page.items) }
+                },
+                onFailure = { e ->
+                    _state.update { it.copy(loading = false, refreshing = false, error = e.message) }
+                },
             )
         }
     }

@@ -80,4 +80,9 @@
     <string name="reply">Reply</string>
     <string name="replying_to">Replying to @%1$s</string>
     <string name="notif_comment">%1$s commented on your post</string>
+    <string name="section_appearance">Appearance</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
 </resources>
+

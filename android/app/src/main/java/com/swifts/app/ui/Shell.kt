@@ -1,5 +1,11 @@
 package com.swifts.app.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,7 +25,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -27,9 +32,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.swifts.app.R
+import com.swifts.app.domain.POST_MEDIA_BUCKET
 import com.swifts.app.ui.theme.LocalSwiftsColors
 
-// Tabs: 0 home, 1 search, 2 groups, 3 messages, 4 profile
+/** Every full-screen destination. Tabs use index 0 home, 1 search, 2 groups, 3 messages, 4 profile. */
+private sealed interface Screen {
+    data object Notifications : Screen
+    data class Profile(val userId: String) : Screen
+    data class Group(val groupId: String) : Screen
+    data class Chat(val conversationId: String, val title: String) : Screen
+    data class Tab(val index: Int) : Screen
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
@@ -73,6 +87,18 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
         openNotifications = false
     }
 
+    // Derive the current destination from the saved state. AnimatedContent keeps each screen's own value while it fades out.
+    val pid = openProfile
+    val gid = openGroup
+    val cid = openChatId
+    val screen: Screen = when {
+        openNotifications -> Screen.Notifications
+        pid != null -> Screen.Profile(pid)
+        gid != null -> Screen.Group(gid)
+        cid != null -> Screen.Chat(cid, openChatTitle)
+        else -> Screen.Tab(tab)
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -111,65 +137,75 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
         },
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
-            val pid = openProfile
-            val gid = openGroup
-            val cid = openChatId
-            when {
-                openNotifications -> NotificationsScreen(
-                    vm = notifVm,
-                    onBack = { openNotifications = false },
-                    onOpenProfile = { id ->
-                        openNotifications = false
-                        openProfile = id
-                    },
-                )
-                pid != null -> ProfileScreen(
-                    services = services,
-                    userId = pid,
-                    onBack = { openProfile = null },
-                    onSignOut = onSignOut,
-                    onOpenChat = { id, title ->
-                        openProfile = null
-                        openChatId = id
-                        openChatTitle = title
-                    },
-                )
-                gid != null -> GroupScreen(
-                    services = services,
-                    groupId = gid,
-                    onBack = { openGroup = null },
-                )
-                cid != null -> ChatScreen(
-                    services = services,
-                    conversationId = cid,
-                    title = openChatTitle,
-                    onBack = { openChatId = null },
-                )
-                tab == 0 -> FeedScreen(
-                    vm = feedVm,
-                    onOpenProfile = { openProfile = it },
-                    header = { StoriesRow(services) },
-                    onComment = { postId, authorId ->
-                        commentingPost = postId
-                        commentingAuthor = authorId
-                    },
-                )
-                tab == 1 -> DiscoverScreen(discoverVm, onOpenProfile = { openProfile = it })
-                tab == 2 -> GroupsScreen(groupsVm, onOpen = { openGroup = it })
-                tab == 3 -> MessagesScreen(messagesVm, onOpen = { id, title ->
-                    openChatId = id
-                    openChatTitle = title
-                })
-                else -> ProfileScreen(
-                    services = services,
-                    userId = meId,
-                    onBack = null,
-                    onSignOut = onSignOut,
-                    onOpenChat = { id, title ->
-                        openChatId = id
-                        openChatTitle = title
-                    },
-                )
+            AnimatedContent(
+                targetState = screen,
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(180)) +
+                        slideInHorizontally(animationSpec = tween(180)) { it / 12 })
+                        .togetherWith(fadeOut(animationSpec = tween(120)))
+                },
+                label = "screen",
+            ) { s ->
+                when (s) {
+                    Screen.Notifications -> NotificationsScreen(
+                        vm = notifVm,
+                        onBack = { openNotifications = false },
+                        onOpenProfile = { id ->
+                            openNotifications = false
+                            openProfile = id
+                        },
+                    )
+                    is Screen.Profile -> ProfileScreen(
+                        services = services,
+                        userId = s.userId,
+                        onBack = { openProfile = null },
+                        onSignOut = onSignOut,
+                        onOpenChat = { id, title ->
+                            openProfile = null
+                            openChatId = id
+                            openChatTitle = title
+                        },
+                    )
+                    is Screen.Group -> GroupScreen(
+                        services = services,
+                        groupId = s.groupId,
+                        onBack = { openGroup = null },
+                    )
+                    is Screen.Chat -> ChatScreen(
+                        services = services,
+                        conversationId = s.conversationId,
+                        title = s.title,
+                        onBack = { openChatId = null },
+                    )
+                    is Screen.Tab -> when (s.index) {
+                        0 -> FeedScreen(
+                            vm = feedVm,
+                            onOpenProfile = { openProfile = it },
+                            mediaUrl = { services.storage.publicUrl(POST_MEDIA_BUCKET, it) },
+                            header = { StoriesRow(services) },
+                            onComment = { postId, authorId ->
+                                commentingPost = postId
+                                commentingAuthor = authorId
+                            },
+                        )
+                        1 -> DiscoverScreen(discoverVm, onOpenProfile = { openProfile = it })
+                        2 -> GroupsScreen(groupsVm, onOpen = { openGroup = it })
+                        3 -> MessagesScreen(messagesVm, onOpen = { id, title ->
+                            openChatId = id
+                            openChatTitle = title
+                        })
+                        else -> ProfileScreen(
+                            services = services,
+                            userId = meId,
+                            onBack = null,
+                            onSignOut = onSignOut,
+                            onOpenChat = { id, title ->
+                                openChatId = id
+                                openChatTitle = title
+                            },
+                        )
+                    }
+                }
             }
         }
     }

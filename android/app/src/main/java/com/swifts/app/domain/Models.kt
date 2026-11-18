@@ -2,11 +2,21 @@ package com.swifts.app.domain
 
 import kotlinx.serialization.Serializable
 
+/** Storage bucket that holds post images. Paths are stored as "<user_id>/<file>". */
+const val POST_MEDIA_BUCKET = "posts"
+
 @Serializable
 data class Author(
     val username: String,
     val display_name: String = "",
     val avatar_url: String? = null,
+)
+
+@Serializable
+data class PostMedia(
+    val kind: String,
+    val storage_path: String,
+    val thumb_path: String? = null,
 )
 
 @Serializable
@@ -18,6 +28,7 @@ data class Post(
     val visibility: String = "public",
     val created_at: String,
     val author: Author? = null,
+    val post_media: List<PostMedia> = emptyList(),
 )
 
 @Serializable

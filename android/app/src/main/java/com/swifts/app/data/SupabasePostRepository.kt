@@ -8,7 +8,8 @@ import kotlinx.serialization.json.put
 import java.net.URLEncoder
 
 private const val POST_SELECT =
-    "id,author_id,body,lang,visibility,created_at,author:profiles!posts_author_id_fkey(username,display_name,avatar_url)"
+    "id,author_id,body,lang,visibility,created_at," +
+    "author:profiles!posts_author_id_fkey(username,display_name,avatar_url),post_media(kind,storage_path,thumb_path)"
 
 class SupabasePostRepository(private val api: SupabaseClient) : PostRepository {
 
@@ -92,3 +93,4 @@ class SupabasePostRepository(private val api: SupabaseClient) : PostRepository {
 
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
 }
+
