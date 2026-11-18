@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.swifts.app.domain.AuthRepository
 import com.swifts.app.domain.Message
 import com.swifts.app.domain.MessageRepository
-import kotlinx.coroutines.delay
+import com.swifts.app.domain.Subscription
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +17,7 @@ data class ChatUiState(
     val error: String? = null,
 )
 
-/** Loads messages and refreshes them every few seconds while the chat is open. */
+/** Loads the history once, then adds new messages as they arrive over Realtime. */
 class ChatViewModel(
     private val messages: MessageRepository,
     private val auth: AuthRepository,
@@ -27,18 +27,15 @@ class ChatViewModel(
     private val _state = MutableStateFlow(ChatUiState())
     val state: StateFlow<ChatUiState> = _state.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            while (true) {
-                refresh()
-                delay(POLL_MS)
-            }
-        }
+    private val subscription: Subscription = messages.subscribe(conversationId) { m ->
+        _state.update { s -> s.copy(messages = merge(s.messages, listOf(m))) }
     }
 
-    private suspend fun refresh() {
-        messages.messages(conversationId).onSuccess { list ->
-            _state.update { it.copy(messages = list) }
+    init {
+        viewModelScope.launch {
+            messages.messages(conversationId).onSuccess { list ->
+                _state.update { s -> s.copy(messages = merge(s.messages, list)) }
+            }
         }
     }
 
@@ -48,13 +45,17 @@ class ChatViewModel(
         if (body.isEmpty()) return
         viewModelScope.launch {
             messages.send(conversationId, uid, body).fold(
-                onSuccess = { m -> _state.update { it.copy(messages = it.messages + m) } },
+                onSuccess = { m -> _state.update { s -> s.copy(messages = merge(s.messages, listOf(m))) } },
                 onFailure = { e -> _state.update { it.copy(error = e.message) } },
             )
         }
     }
 
-    private companion object {
-        const val POLL_MS = 3000L
+    override fun onCleared() {
+        subscription.cancel()
     }
+
+    /** Combines lists without duplicates, in time order. */
+    private fun merge(current: List<Message>, incoming: List<Message>): List<Message> =
+        (current + incoming).distinctBy { it.id }.sortedBy { it.created_at }
 }

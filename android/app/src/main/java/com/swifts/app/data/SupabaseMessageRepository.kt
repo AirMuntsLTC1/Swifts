@@ -4,6 +4,7 @@ import com.swifts.app.domain.Author
 import com.swifts.app.domain.ConversationSummary
 import com.swifts.app.domain.Message
 import com.swifts.app.domain.MessageRepository
+import com.swifts.app.domain.Subscription
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -78,6 +79,9 @@ class SupabaseMessageRepository(private val api: SupabaseClient) : MessageReposi
             )
         ).first()
     }
+
+    override fun subscribe(conversationId: String, onMessage: (Message) -> Unit): Subscription =
+        MessageRealtime(api, conversationId, onMessage).start()
 
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
 }

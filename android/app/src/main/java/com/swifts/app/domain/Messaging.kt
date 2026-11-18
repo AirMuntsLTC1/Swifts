@@ -19,9 +19,15 @@ data class Message(
     val created_at: String,
 )
 
+/** A live listener. Call cancel() when the screen closes. */
+interface Subscription {
+    fun cancel()
+}
+
 interface MessageRepository {
     suspend fun conversations(userId: String): Result<List<ConversationSummary>>
     suspend fun startConversation(otherUserId: String): Result<String>
     suspend fun messages(conversationId: String): Result<List<Message>>
     suspend fun send(conversationId: String, senderId: String, body: String): Result<Message>
+    fun subscribe(conversationId: String, onMessage: (Message) -> Unit): Subscription
 }
