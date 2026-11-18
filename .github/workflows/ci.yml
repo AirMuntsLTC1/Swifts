@@ -16,8 +16,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Contracts
         run: python3 tools/check_contracts.py
+      - name: Theme rules
+        run: python3 tools/check_theme.py
       - name: PHP lint
-        run: find services/media-php -name '*.php' -exec php -l {} \;
+        run: find services -name '*.php' -exec php -l {} \;
       - name: C++ compile
         run: g++ -std=c++17 -c native/src/swifts_core.cpp -Inative/include -o /tmp/core.o
 
