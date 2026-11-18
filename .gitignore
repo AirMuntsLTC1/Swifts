@@ -4,3 +4,7 @@ android/.gradle/
 android/local.properties
 .idea/
 *.iml
+# Signing keys must never be committed
+*.jks
+*.keystore
+swifts-keys/

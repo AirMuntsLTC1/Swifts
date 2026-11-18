@@ -30,29 +30,29 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
       GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      SWIFTS_STORE_PASSWORD: ${{ secrets.SWIFTS_STORE_PASSWORD }}
+      SWIFTS_KEY_ALIAS: ${{ secrets.SWIFTS_KEY_ALIAS }}
+      SWIFTS_KEY_PASSWORD: ${{ secrets.SWIFTS_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Check required secrets
         run: |
-          for v in SUPABASE_URL SUPABASE_PUBLISHABLE_KEY; do
+          for v in SUPABASE_URL SUPABASE_PUBLISHABLE_KEY GOOGLE_WEB_CLIENT_ID \
+                   ANDROID_KEYSTORE_BASE64 SWIFTS_STORE_PASSWORD SWIFTS_KEY_ALIAS SWIFTS_KEY_PASSWORD; do
             if [ -z "${!v}" ]; then echo "::error::Missing GitHub secret $v"; exit 1; fi
           done
-          if [ -z "$GOOGLE_WEB_CLIENT_ID" ]; then
-            echo "::warning::GOOGLE_WEB_CLIENT_ID secret is empty. The app builds, but Google sign-in will fail."
-          fi
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # Gradle wrapper, dependency cache and build cache, restored from the previous run.
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      # Platform and build-tools are cached so runs skip the download.
       - name: Cache Android SDK packages
         uses: actions/cache@v4
         with:
@@ -64,6 +64,13 @@ jobs:
       - name: Install SDK packages if missing
         run: yes | sdkmanager "platforms;android-35" "build-tools;35.0.0" > /dev/null || true
 
+      - name: Restore signing key and print its SHA-1
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/swifts.jks"
+          echo "Signing key SHA-1 (must match the Android OAuth client):"
+          keytool -list -v -keystore "$RUNNER_TEMP/swifts.jks" \
+            -alias "$SWIFTS_KEY_ALIAS" -storepass "$SWIFTS_STORE_PASSWORD" | grep "SHA1:"
+
       - name: Build arm64 debug APK
         working-directory: android
         run: >
@@ -72,6 +79,10 @@ jobs:
           -PSUPABASE_URL="$SUPABASE_URL"
           -PSUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY"
           -PGOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"
+          -PSWIFTS_KEYSTORE="$RUNNER_TEMP/swifts.jks"
+          -PSWIFTS_STORE_PASSWORD="$SWIFTS_STORE_PASSWORD"
+          -PSWIFTS_KEY_ALIAS="$SWIFTS_KEY_ALIAS"
+          -PSWIFTS_KEY_PASSWORD="$SWIFTS_KEY_PASSWORD"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

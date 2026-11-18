@@ -5,26 +5,48 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
+// A fixed signing key keeps the SHA-1 the same on every build. Google sign-in depends on it.
+// CI passes these with -P flags from GitHub secrets. Without them, the default debug key is used.
+val swiftsKeystore: String? = project.findProperty("SWIFTS_KEYSTORE")?.toString()?.takeIf { it.isNotBlank() }
+
 android {
     namespace = "com.swifts.app"
     compileSdk = 35
+
+    signingConfigs {
+        if (swiftsKeystore != null) {
+            create("swifts") {
+                storeFile = project.file(swiftsKeystore)
+                storePassword = project.findProperty("SWIFTS_STORE_PASSWORD")?.toString()
+                keyAlias = project.findProperty("SWIFTS_KEY_ALIAS")?.toString()
+                keyPassword = project.findProperty("SWIFTS_KEY_PASSWORD")?.toString()
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "com.swifts.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "0.4.0"
+        versionName = "0.5.0"
 
         // Phones built for 64-bit ARM only: smaller APK, fewer native libs to package.
         ndk {
             abiFilters += "arm64-v8a"
         }
 
-        // Values come from -P flags in CI (GitHub secrets) or ~/.gradle/gradle.properties locally.
         buildConfigField("String", "SUPABASE_URL", "\"${project.findProperty("SUPABASE_URL") ?: ""}\"")
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"${project.findProperty("SUPABASE_PUBLISHABLE_KEY") ?: ""}\"")
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"${project.findProperty("GOOGLE_WEB_CLIENT_ID") ?: ""}\"")
+    }
+
+    buildTypes {
+        debug {
+            if (swiftsKeystore != null) {
+                signingConfig = signingConfigs.getByName("swifts")
+            }
+        }
     }
 
     buildFeatures {
