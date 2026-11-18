@@ -21,6 +21,7 @@ import com.swifts.app.data.SupabaseClient
 import com.swifts.app.data.SupabaseGroupRepository
 import com.swifts.app.data.SupabaseMediaStorage
 import com.swifts.app.data.SupabaseMessageRepository
+import com.swifts.app.data.SupabaseNotificationRepository
 import com.swifts.app.data.SupabasePostRepository
 import com.swifts.app.data.SupabaseProfileRepository
 import com.swifts.app.data.SupabaseStoryRepository
@@ -49,6 +50,7 @@ class MainActivity : ComponentActivity() {
             groups = SupabaseGroupRepository(api),
             stories = SupabaseStoryRepository(api),
             messages = SupabaseMessageRepository(api),
+            notifications = SupabaseNotificationRepository(api),
             storage = SupabaseMediaStorage(api),
             lang = Locale.getDefault().language,
         )

@@ -60,4 +60,12 @@
     <string name="send">Send</string>
     <string name="your_story">Your story</string>
     <string name="uploading">Uploading…</string>
+    <string name="section_new">New</string>
+    <string name="section_earlier">Earlier</string>
+    <string name="notif_like">%1$s liked your post</string>
+    <string name="notif_follow">%1$s started following you</string>
+    <string name="notif_message">%1$s sent you a message</string>
+    <string name="someone">Someone</string>
+    <string name="no_notifications">No notifications yet.</string>
+    <string name="notifications_title">Notifications</string>
 </resources>

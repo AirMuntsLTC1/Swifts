@@ -40,6 +40,7 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
     var openGroup by rememberSaveable { mutableStateOf<String?>(null) }
     var openChatId by rememberSaveable { mutableStateOf<String?>(null) }
     var openChatTitle by rememberSaveable { mutableStateOf("") }
+    var openNotifications by rememberSaveable { mutableStateOf(false) }
     var showComposer by rememberSaveable { mutableStateOf(false) }
 
     val feedVm: FeedViewModel = viewModel(
@@ -56,13 +57,18 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
     val messagesVm: MessagesViewModel = viewModel(
         factory = viewModelFactory { initializer { MessagesViewModel(services.messages, services.auth) } },
     )
+    val notifVm: NotificationsViewModel = viewModel(
+        factory = viewModelFactory { initializer { NotificationsViewModel(services.notifications, services.auth) } },
+    )
+    val notifState by notifVm.state.collectAsState()
     val feedState by feedVm.state.collectAsState()
 
-    val showingSubpage = openProfile != null || openGroup != null || openChatId != null
+    val showingSubpage = openProfile != null || openGroup != null || openChatId != null || openNotifications
     fun closeSubpages() {
         openProfile = null
         openGroup = null
         openChatId = null
+        openNotifications = false
     }
 
     Scaffold(
@@ -76,6 +82,9 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
                             style = MaterialTheme.typography.headlineSmall,
                             color = colors.primaryText,
                         )
+                    },
+                    actions = {
+                        NotificationBell(unread = notifState.unread, onClick = { openNotifications = true })
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 )
@@ -104,6 +113,14 @@ fun SwiftsShell(services: AppServices, onSignOut: () -> Unit) {
             val gid = openGroup
             val cid = openChatId
             when {
+                openNotifications -> NotificationsScreen(
+                    vm = notifVm,
+                    onBack = { openNotifications = false },
+                    onOpenProfile = { id ->
+                        openNotifications = false
+                        openProfile = id
+                    },
+                )
                 pid != null -> ProfileScreen(
                     services = services,
                     userId = pid,
