@@ -1,7 +1,5 @@
 package com.swifts.app.ui.theme
 
-import android.content.res.AssetManager
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -12,18 +10,18 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
+import com.swifts.app.R
 
-/** Inter loaded from assets/fonts (filled by tools/install_fonts.sh). */
-fun interFamily(assets: AssetManager): FontFamily = FontFamily(
-    Font(path = "fonts/inter_regular.ttf", assetManager = assets, weight = FontWeight.Normal),
-    Font(path = "fonts/inter_medium.ttf", assetManager = assets, weight = FontWeight.Medium),
-    Font(path = "fonts/inter_semibold.ttf", assetManager = assets, weight = FontWeight.SemiBold),
-    Font(path = "fonts/inter_bold.ttf", assetManager = assets, weight = FontWeight.Bold),
+/** Inter from res/font (source copies live in assets/fonts). */
+fun interFamily(): FontFamily = FontFamily(
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+    Font(R.font.inter_bold, FontWeight.Bold),
 )
 
 @Immutable
@@ -112,8 +110,7 @@ fun SwiftsTheme(
     darkTheme: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val context = LocalContext.current
-    val family = remember(context) { interFamily(context.assets) }
+    val family = remember { interFamily() }
     val typography = remember(family) { swiftsTypography(family) }
     val colors = if (darkTheme) DarkColors else LightColors
     val scheme = if (darkTheme) {
