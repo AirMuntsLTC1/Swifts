@@ -15,15 +15,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
+import androidx.compose.ui.text.font.Font
+import com.swifts.app.R
 import androidx.compose.ui.unit.sp
 
 /** Inter loaded from assets/fonts (filled by tools/install_fonts.sh). */
-fun interFamily(assets: AssetManager): FontFamily = FontFamily(
-    Font(path = "fonts/inter_regular.ttf", assetManager = assets, weight = FontWeight.Normal),
-    Font(path = "fonts/inter_medium.ttf", assetManager = assets, weight = FontWeight.Medium),
-    Font(path = "fonts/inter_semibold.ttf", assetManager = assets, weight = FontWeight.SemiBold),
-    Font(path = "fonts/inter_bold.ttf", assetManager = assets, weight = FontWeight.Bold),
+fun interFamily(): FontFamily = FontFamily(
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+    Font(R.font.inter_bold, FontWeight.Bold),
 )
 
 @Immutable
@@ -113,7 +114,7 @@ fun SwiftsTheme(
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    val family = remember(context) { interFamily(context.assets) }
+    val family = remember { interFamily() }
     val typography = remember(family) { swiftsTypography(family) }
     val colors = if (darkTheme) DarkColors else LightColors
     val scheme = if (darkTheme) {
