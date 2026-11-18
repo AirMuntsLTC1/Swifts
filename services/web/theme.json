@@ -1,22 +1,22 @@
 {
   "light": {
     "bg-main": "#FFFFFF",
-    "bg-surface": "#F0F2F5",
+    "bg-surface": "#F7F7F8",
     "bg-card": "#FFFFFF",
-    "text-main": "#050505",
+    "text-main": "#1C1C1E",
     "text-muted": "#65676B",
     "border-subtle": "#E4E6EB",
-    "brand-primary": "#6A4CFF",
-    "brand-hover": "#5538E0"
+    "brand-primary": "#1C1C1E",
+    "brand-hover": "#3A3A3C"
   },
   "dark": {
-    "bg-main": "#18191A",
-    "bg-surface": "#242526",
-    "bg-card": "#242526",
-    "text-main": "#E4E6EB",
-    "text-muted": "#B0B3B8",
-    "border-subtle": "#3A3B3C",
-    "brand-primary": "#8B73FF",
-    "brand-hover": "#A190FF"
+    "bg-main": "#121212",
+    "bg-surface": "#1C1C1E",
+    "bg-card": "#1C1C1E",
+    "text-main": "#F2F2F4",
+    "text-muted": "#A8ABB0",
+    "border-subtle": "#2C2C2E",
+    "brand-primary": "#F2F2F4",
+    "brand-hover": "#D6D6D9"
   }
 }

@@ -16,13 +16,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.swifts.app.R
 
-/** Inter from res/font (source copies live in assets/fonts). */
+/** Inter from res/font. */
 fun interFamily(): FontFamily = FontFamily(
     Font(R.font.inter_regular, FontWeight.Normal),
     Font(R.font.inter_medium, FontWeight.Medium),
     Font(R.font.inter_semibold, FontWeight.SemiBold),
     Font(R.font.inter_bold, FontWeight.Bold),
 )
+
+// Palette: white, greys, and near-black text. No color accents.
+private val INK = Color(0xFF1C1C1E)        // slightly black: text, buttons, icons
+private val INK_SOFT = Color(0xFF3A3A3C)
+private val MUTED = Color(0xFF65676B)      // secondary text
+private val LINE = Color(0xFFE4E6EB)       // borders and dividers
+private val OUTLINE = Color(0xFFC4C7CC)
+private val WASH = Color(0xFFF0F2F5)       // pills, avatars, bars
+private val WASH_STRONG = Color(0xFFEEEEF0)
+private val WHITE = Color(0xFFFFFFFF)
+
+private val DARK_INK = Color(0xFFF2F2F4)
+private val DARK_MUTED = Color(0xFFA8ABB0)
+private val DARK_LINE = Color(0xFF2C2C2E)
+private val DARK_BG = Color(0xFF121212)
+private val DARK_SURFACE = Color(0xFF1C1C1E)
 
 @Immutable
 data class SwiftsColors(
@@ -34,22 +50,52 @@ data class SwiftsColors(
 )
 
 private val LightColors = SwiftsColors(
-    primaryText = Color(0xFF050505),
-    mutedText = Color(0xFF65676B),
-    accent = Color(0xFF6A4CFF),
-    accentSoft = Color(0x1F6A4CFF),
-    neutralPill = Color(0xFFE4E6EB),
+    primaryText = INK,
+    mutedText = MUTED,
+    accent = INK,
+    accentSoft = WASH_STRONG,
+    neutralPill = WASH,
 )
 
 private val DarkColors = SwiftsColors(
-    primaryText = Color(0xFFE4E6EB),
-    mutedText = Color(0xFFB0B3B8),
-    accent = Color(0xFF8B73FF),
-    accentSoft = Color(0x338B73FF),
-    neutralPill = Color(0xFF3A3B3C),
+    primaryText = DARK_INK,
+    mutedText = DARK_MUTED,
+    accent = DARK_INK,
+    accentSoft = DARK_LINE,
+    neutralPill = DARK_LINE,
 )
 
 val LocalSwiftsColors = staticCompositionLocalOf { LightColors }
+
+private val LightScheme = lightColorScheme(
+    primary = INK, onPrimary = WHITE,
+    secondary = INK_SOFT, onSecondary = WHITE,
+    tertiary = MUTED, onTertiary = WHITE,
+    background = WHITE, onBackground = INK,
+    surface = WHITE, onSurface = INK,
+    surfaceVariant = WASH, onSurfaceVariant = MUTED,
+    surfaceTint = WHITE,
+    outline = OUTLINE, outlineVariant = LINE,
+    primaryContainer = WASH_STRONG, onPrimaryContainer = INK,
+    secondaryContainer = WASH, onSecondaryContainer = INK,
+    error = INK, onError = WHITE,
+    errorContainer = WASH, onErrorContainer = INK,
+)
+
+private val DarkScheme = darkColorScheme(
+    primary = DARK_INK, onPrimary = DARK_BG,
+    secondary = DARK_MUTED, onSecondary = DARK_BG,
+    tertiary = DARK_MUTED, onTertiary = DARK_BG,
+    background = DARK_BG, onBackground = DARK_INK,
+    surface = DARK_SURFACE, onSurface = DARK_INK,
+    surfaceVariant = DARK_LINE, onSurfaceVariant = DARK_MUTED,
+    surfaceTint = DARK_BG,
+    outline = DARK_MUTED, outlineVariant = DARK_LINE,
+    primaryContainer = DARK_LINE, onPrimaryContainer = DARK_INK,
+    secondaryContainer = DARK_LINE, onSecondaryContainer = DARK_INK,
+    error = DARK_INK, onError = DARK_BG,
+    errorContainer = DARK_LINE, onErrorContainer = DARK_INK,
+)
 
 /** Type scale from the Swifts spec, all in Inter. */
 fun swiftsTypography(f: FontFamily): Typography {
@@ -113,25 +159,7 @@ fun SwiftsTheme(
     val family = remember { interFamily() }
     val typography = remember(family) { swiftsTypography(family) }
     val colors = if (darkTheme) DarkColors else LightColors
-    val scheme = if (darkTheme) {
-        darkColorScheme(
-            primary = colors.accent,
-            onPrimary = Color.White,
-            background = Color(0xFF18191A),
-            onBackground = colors.primaryText,
-            surface = Color(0xFF242526),
-            onSurface = colors.primaryText,
-        )
-    } else {
-        lightColorScheme(
-            primary = colors.accent,
-            onPrimary = Color.White,
-            background = Color.White,
-            onBackground = colors.primaryText,
-            surface = Color.White,
-            onSurface = colors.primaryText,
-        )
-    }
+    val scheme = if (darkTheme) DarkScheme else LightScheme
     CompositionLocalProvider(LocalSwiftsColors provides colors) {
         MaterialTheme(colorScheme = scheme, typography = typography, content = content)
     }

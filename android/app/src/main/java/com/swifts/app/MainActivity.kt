@@ -5,10 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -16,9 +14,9 @@ import coil.Coil
 import coil.ImageLoader
 import coil.decode.SvgDecoder
 import com.swifts.app.data.SessionStore
-import com.swifts.app.data.SupabaseCommentRepository
 import com.swifts.app.data.SupabaseAuthRepository
 import com.swifts.app.data.SupabaseClient
+import com.swifts.app.data.SupabaseCommentRepository
 import com.swifts.app.data.SupabaseGroupRepository
 import com.swifts.app.data.SupabaseMediaStorage
 import com.swifts.app.data.SupabaseMessageRepository
@@ -60,17 +58,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             SwiftsTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
-                    var signedIn by remember { mutableStateOf(auth.currentUserId() != null) }
+                    // Driven by the stored session. Signing in or out, or an expired session, switches screens here.
+                    val signedIn by store.signedIn.collectAsState()
                     if (!signedIn) {
                         val vm: AuthViewModel = viewModel(
                             factory = viewModelFactory { initializer { AuthViewModel(auth) } },
                         )
-                        AuthScreen(vm) { signedIn = true }
+                        AuthScreen(vm) { }
                     } else {
-                        SwiftsShell(services = services, onSignOut = {
-                            auth.signOut()
-                            signedIn = false
-                        })
+                        SwiftsShell(services = services, onSignOut = { auth.signOut() })
                     }
                 }
             }
